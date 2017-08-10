@@ -45,9 +45,8 @@
 #define CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
 
 #include <crazyflie_lqr/types.h>
-#include <crazyflie_driver/StateIter.h>
-#include <crazyflie_driver/StateInput.h>
-#include <crazyflie_driver/Input.h>
+#include <crazyflie_msgs/StateStamped.h>
+#include <crazyflie_msgs/ControlStamped.h>
 
 #include <ros/ros.h>
 #include <math.h>
@@ -70,11 +69,10 @@ private:
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
   // Process an incoming reference point.
-  void ReferenceCallback(const crazyflie_driver::StateIter::ConstPtr& msg);
+  void ReferenceCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
 
   // Process an incoming state measurement.
-  void StateCallback(const crazyflie_driver::StateIter::ConstPtr& msg);
-  //  void StateCallback(const geometry_msgs::TransformConstPtr& msg);
+  void StateCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
 
   // Static helper functions for angle wrapping and angle conversions.
   static inline double DegreesToRadians(double d) { return d * M_PI / 180.0; }
@@ -99,13 +97,11 @@ private:
   // Publishers and subscribers.
   ros::Subscriber state_sub_;
   ros::Subscriber reference_sub_;
-  ros::Publisher state_input_pub_;
-  ros::Publisher input_pub_;
+  ros::Publisher control_pub_;
 
   std::string state_topic_;
   std::string reference_topic_;
-  std::string state_input_topic_;
-  std::string input_topic_;
+  std::string control_topic_;
 
   // K matrix and reference state/control (to fight gravity). These are
   // hard-coded since they will not change.

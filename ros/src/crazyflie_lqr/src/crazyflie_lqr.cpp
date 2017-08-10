@@ -118,11 +118,8 @@ bool CrazyflieLQR::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("crazyflie_lqr/reference_topic", key)) return false;
   if (!ros::param::get(key, reference_topic_)) return false;
 
-  if (!ros::param::search("crazyflie_lqr/state_input_topic", key)) return false;
-  if (!ros::param::get(key, state_input_topic_)) return false;
-
-  if (!ros::param::search("crazyflie_lqr/input_topic", key)) return false;
-  if (!ros::param::get(key, input_topic_)) return false;
+  if (!ros::param::search("crazyflie_lqr/control_topic", key)) return false;
+  if (!ros::param::get(key, control_topic_)) return false;
 
   return true;
 }
@@ -131,57 +128,55 @@ bool CrazyflieLQR::LoadParameters(const ros::NodeHandle& n) {
 bool CrazyflieLQR::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
-  // Reference subscriber.
+  // Subscribers.
   state_sub_ = nl.subscribe(
     state_topic_.c_str(), 10, &CrazyflieLQR::StateCallback, this);
   reference_sub_ = nl.subscribe(
     reference_topic_.c_str(), 10, &CrazyflieLQR::ReferenceCallback, this);
 
-  // Control publishers.
-  state_input_pub_ = nl.advertise<crazyflie_driver::StateInput>(
-    state_input_topic_.c_str(), 10, false);
-  input_pub_ = nl.advertise<crazyflie_driver::Input>(
-    input_topic_.c_str(), 10, false);
+  // Control publisher.
+  control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
+    control_topic_.c_str(), 10, false);
 
   return true;
 }
 
 // Process an incoming reference point change.
 void CrazyflieLQR::ReferenceCallback(
-  const crazyflie_driver::StateIter::ConstPtr& msg) {
-  x_ref_(0) = msg->x;
-  x_ref_(1) = msg->y;
-  x_ref_(2) = msg->z;
-  x_ref_(3) = msg->x_dot;
-  x_ref_(4) = msg->y_dot;
-  x_ref_(5) = msg->z_dot;
-  x_ref_(6) = msg->roll;
-  x_ref_(7) = msg->pitch;
-  x_ref_(8) = msg->yaw;
-  x_ref_(9) = msg->roll_dot;
-  x_ref_(10) = msg->pitch_dot;
-  x_ref_(11) = msg->yaw_dot;
+  const crazyflie_msgs::StateStamped::ConstPtr& msg) {
+  x_ref_(0) = msg->state.x;
+  x_ref_(1) = msg->state.y;
+  x_ref_(2) = msg->state.z;
+  x_ref_(3) = msg->state.x_dot;
+  x_ref_(4) = msg->state.y_dot;
+  x_ref_(5) = msg->state.z_dot;
+  x_ref_(6) = msg->state.roll;
+  x_ref_(7) = msg->state.pitch;
+  x_ref_(8) = msg->state.yaw;
+  x_ref_(9) = msg->state.roll_dot;
+  x_ref_(10) = msg->state.pitch_dot;
+  x_ref_(11) = msg->state.yaw_dot;
 
   ROS_INFO("%s: Set new reference point.", name_.c_str());
 }
 
 // Process an incoming state measurement.
 void CrazyflieLQR::StateCallback(
-  const crazyflie_driver::StateIter::ConstPtr& msg) {
+  const crazyflie_msgs::StateStamped::ConstPtr& msg) {
   // Read the message into the state and compute relative state.
   VectorXd x(12);
-  x(0) = msg->x;
-  x(1) = msg->y;
-  x(2) = msg->z;
-  x(3) = msg->x_dot;
-  x(4) = msg->y_dot;
-  x(5) = msg->z_dot;
-  x(6) = msg->roll;
-  x(7) = msg->pitch;
-  x(8) = msg->yaw;
-  x(9) = msg->roll_dot;
-  x(10) = msg->pitch_dot;
-  x(11) = msg->yaw_dot;
+  x(0) = msg->state.x;
+  x(1) = msg->state.y;
+  x(2) = msg->state.z;
+  x(3) = msg->state.x_dot;
+  x(4) = msg->state.y_dot;
+  x(5) = msg->state.z_dot;
+  x(6) = msg->state.roll;
+  x(7) = msg->state.pitch;
+  x(8) = msg->state.yaw;
+  x(9) = msg->state.roll_dot;
+  x(10) = msg->state.pitch_dot;
+  x(11) = msg->state.yaw_dot;
 
   VectorXd x_rel = x - x_ref_;
 
@@ -216,40 +211,12 @@ void CrazyflieLQR::StateCallback(
 
   std::cout << "Control: " << u.transpose() << std::endl;
 
-  // Publish messages.
-  crazyflie_driver::Input input_msg;
-  input_msg.U0 = u(0);
-  input_msg.U1 = u(1);
-  input_msg.U2 = u(2);
-  input_msg.U3 = u(3);
-  input_msg.U4 = u(4);
-  input_msg.U5 = u(5);
-  input_msg.U6 = u(6);
+  // Publish.
+  crazyflie_msgs::ControlStamped control_msg;
+  control_msg.control.roll = u(0);
+  control_msg.control.pitch = u(1);
+  control_msg.control.yaw_dot = u(2);
+  control_msg.control.thrust = u(3);
 
-  input_pub_.publish(input_msg);
-
-  crazyflie_driver::StateInput state_input_msg;
-  state_input_msg.x = x(0);
-  state_input_msg.y = x(1);
-  state_input_msg.z = x(2);
-  state_input_msg.x_dot = x(3);
-  state_input_msg.y_dot = x(4);
-  state_input_msg.z_dot = x(5);
-  state_input_msg.roll = x(6);
-  state_input_msg.pitch = x(7);
-  state_input_msg.yaw = x(8);
-  state_input_msg.roll_dot = x(9);
-  state_input_msg.pitch_dot = x(10);
-  state_input_msg.yaw_dot = x(11);
-  state_input_msg.header.stamp = ros::Time::now();
-  state_input_msg.U0 = input_msg.U0;
-  state_input_msg.U1 = input_msg.U1;
-  state_input_msg.U2 = input_msg.U2;
-  state_input_msg.U3 = input_msg.U3;
-  state_input_msg.U4 = input_msg.U4;
-  state_input_msg.U5 = input_msg.U5;
-  state_input_msg.U6 = input_msg.U6;
-  state_input_msg.iter = msg->iteration;
-
-  state_input_pub_.publish(state_input_msg);
+  control_pub_.publish(control_msg);
 }
