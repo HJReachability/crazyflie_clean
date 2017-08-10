@@ -36,71 +36,23 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LQR controller for the Crazyflie. Uses an LQR control matrix for hovering
-// at each specified reference point.
+// Custom types.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
-#define CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
+#ifndef CRAZYFLIE_UTILS_TYPES_H
+#define CRAZYFLIE_UTILS_TYPES_H
 
-#include <crazyflie_utils/types.h>
-#include <crazyflie_utils/angles.h>
-#include <crazyflie_msgs/StateStamped.h>
-#include <crazyflie_msgs/ControlStamped.h>
+#include <Eigen/Dense>
 
-#include <ros/ros.h>
-#include <math.h>
-#include <fstream>
+// ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
 
-class CrazyflieLQR {
-public:
-  ~CrazyflieLQR() {}
-  CrazyflieLQR()
-    : K_(MatrixXd::Zero(7, 12)),
-      u_ref_(VectorXd::Zero(7)),
-      x_ref_(VectorXd::Zero(12)) {}
-
-  // Initialize this class by reading parameters and loading callbacks.
-  bool Initialize(const ros::NodeHandle& n);
-
-private:
-  // Load parameters and register callbacks.
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
-
-  // Process an incoming reference point.
-  void ReferenceCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
-
-  // Process an incoming state measurement.
-  void StateCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
-
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
-
-  std::string state_topic_;
-  std::string reference_topic_;
-  std::string control_topic_;
-
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
-
-  std::string K_filename_;
-  std::string u_ref_filename_;
-  std::string x_ref_filename_;
-
-  // Dimensions of control and state spaces.
-  static const size_t U_DIM;
-  static const size_t X_DIM;
-
-  // Initialized flag and name.
-  bool initialized_;
-  std::string name_;
-}; //\class CrazyflieLQR
+typedef Eigen::Matrix<double, 3, 4> Matrix34d;
+using Eigen::Matrix3d;
+using Eigen::Vector3d;
+using Eigen::Matrix4d;
+using Eigen::VectorXd;
+using Eigen::MatrixXd;
+using Eigen::Quaterniond;
 
 #endif

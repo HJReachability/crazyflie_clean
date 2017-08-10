@@ -199,15 +199,15 @@ void CrazyflieLQR::StateCallback(
   x_rel(3) = rot_y_dot;
 
   // Wrap angles.
-  x_rel(6) = WrapAngleRadians(x_rel(6));
-  x_rel(7) = WrapAngleRadians(x_rel(7));
-  x_rel(8) = WrapAngleRadians(x_rel(8));
+  x_rel(6) = angles::WrapAngleRadians(x_rel(6));
+  x_rel(7) = angles::WrapAngleRadians(x_rel(7));
+  x_rel(8) = angles::WrapAngleRadians(x_rel(8));
 
   // Compute optimal control.
   VectorXd u = K_ * x_rel + u_ref_;
-  u(0) = WrapAngleRadians(u(0));
-  u(1) = WrapAngleRadians(u(1));
-  u(2) = WrapAngleRadians(u(2));
+  u(0) = angles::WrapAngleRadians(u(0));
+  u(1) = angles::WrapAngleRadians(u(1));
+  u(2) = angles::WrapAngleRadians(u(2));
 
   std::cout << "Control: " << u.transpose() << std::endl;
 

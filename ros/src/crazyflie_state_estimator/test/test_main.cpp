@@ -36,23 +36,13 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Custom types.
+// Unit tests for the meta_planner package.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_TYPES_H
-#define CRAZYFLIE_LQR_TYPES_H
+#include <gtest/gtest.h>
 
-#include <Eigen/Dense>
-
-// ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
-
-typedef Eigen::Matrix<double, 3, 4> Matrix34d;
-using Eigen::Matrix3d;
-using Eigen::Vector3d;
-using Eigen::Matrix4d;
-using Eigen::VectorXd;
-using Eigen::MatrixXd;
-using Eigen::Quaterniond;
-
-#endif
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

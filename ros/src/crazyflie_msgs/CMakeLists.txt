@@ -11,12 +11,14 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
+file(GLOB msg_files RELATIVE ${PROJECT_SOURCE_DIR}/msg ${PROJECT_SOURCE_DIR}/msg/*.msg)
+add_message_files(DIRECTORY msg FILES ${msg_files})
+
 add_message_files(
+  DIRECTORY
+  msg
   FILES
-  State.msg
-  StateStamped.msg
-  Control.msg
-  ControlStamped.msg
+  ${msg_files}
 )
 
 generate_messages(
@@ -25,11 +27,8 @@ generate_messages(
 )
 
 catkin_package(
-  INCLUDE_DIRS
-  LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
     std_msgs
     message_runtime
-  DEPENDS
 )

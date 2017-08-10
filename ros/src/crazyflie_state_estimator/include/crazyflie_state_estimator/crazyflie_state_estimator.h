@@ -35,31 +35,35 @@
  */
 
 ///////////////////////////////////////////////////////////////////////////////
-//
-// LQR controller for the Crazyflie. Uses an LQR control matrix for hovering
-// at each specified reference point.
+///
+// State estimator node. Sets a recurring timer and every time it rings,
+// this node will query tf for the transform between the specified robot
+// frame and the fixed frame, merge it with the previous state estimate, and
+// publish the new estimate.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
-#define CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
+#ifndef CRAZYFLIE_STATE_ESTIMATOR_CRAZYFLIE_STATE_ESTIMATOR_H
+#define CRAZYFLIE_STATE_ESTIMATOR_CRAZYFLIE_STATE_ESTIMATOR_H
 
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
 #include <crazyflie_msgs/StateStamped.h>
-#include <crazyflie_msgs/ControlStamped.h>
+
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <ros/ros.h>
 #include <math.h>
-#include <fstream>
 
-class CrazyflieLQR {
+class CrazyflieStateEstimator {
 public:
-  ~CrazyflieLQR() {}
-  CrazyflieLQR()
-    : K_(MatrixXd::Zero(7, 12)),
-      u_ref_(VectorXd::Zero(7)),
-      x_ref_(VectorXd::Zero(12)) {}
+  ~CrazyflieStateEstimator() {}
+  CrazyflieStateEstimator()
+    : x_(VectorXd::Zero(X_DIM)),
+      tf_listener_(tf_buffer_),
+      initialized_(false),
+      first_update_(true) {}
 
   // Initialize this class by reading parameters and loading callbacks.
   bool Initialize(const ros::NodeHandle& n);
@@ -69,38 +73,37 @@ private:
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Process an incoming reference point.
-  void ReferenceCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
+  // Whenever timer rings, query tf, update state estimate, and publish.
+  void TimerCallback(const ros::TimerEvent& e);
 
-  // Process an incoming state measurement.
-  void StateCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
+  // Running state estimate.
+  VectorXd x_;
 
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
-
+  // State publisher.
+  ros::Publisher state_pub_;
   std::string state_topic_;
-  std::string reference_topic_;
-  std::string control_topic_;
 
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
+  // Frames of reference.
+  std::string fixed_frame_id_;
+  std::string robot_frame_id_;
 
-  std::string K_filename_;
-  std::string u_ref_filename_;
-  std::string x_ref_filename_;
+  // Set a recurring timer for a discrete-time controller. Also keep track
+  // of the most recent time when the timer fired.
+  ros::Time last_time_;
+  ros::Timer timer_;
+  double dt_;
 
-  // Dimensions of control and state spaces.
-  static const size_t U_DIM;
+  // Buffer and listener to get current pose.
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
+  // State dimension as a static constant.
   static const size_t X_DIM;
 
-  // Initialized flag and name.
+  // Name, and flags for initialization and first state update.
   bool initialized_;
+  bool first_update_;
   std::string name_;
-}; //\class CrazyflieLQR
+}; //\class CrazyflieStateEstimator
 
 #endif

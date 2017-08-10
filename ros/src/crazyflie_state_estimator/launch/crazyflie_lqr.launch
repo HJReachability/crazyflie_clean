@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="reference_topic" default="reference"/>
+  <arg name="state_topic" default="/crazyflie/state_iter"/>
+  <arg name="state_input_topic" default="/crazyflie/state_input"/>
+  <arg name="input_topic" default="/crazyflie/control"/>
+  <arg name="K_file" default="/references/K_hover.txt"/>
+  <arg name="u_ref_file" default="/references/u_ref_hover.txt"/>
+  <arg name="x_ref_file" default="/references/x_ref_hover.txt"/>
+
+  <node name="crazyflie_lqr"
+        pkg="crazyflie_lqr"
+        type="crazyflie_lqr_node"
+        output="screen">
+
+    <param name="reference_topic" value="$(find crazyflie_lqr)/$(arg reference_topic)"/>
+    <param name="state_topic" value="$(find crazyflie_lqr)/$(arg state_topic)"/>
+    <param name="state_input_topic" value="$(find crazyflie_lqr)/$(arg state_input_topic)"/>
+    <param name="input_topic" value="$(find crazyflie_lqr)/$(arg input_topic)"/>
+    <param name="K_file" value="$(find crazyflie_lqr)/$(arg K_file)"/>
+    <param name="u_ref_file" value="$(find crazyflie_lqr)/$(arg u_ref_file)"/>
+    <param name="x_ref_file" value="$(find crazyflie_lqr)/$(arg x_ref_file)"/>
+  </node>
+</launch>

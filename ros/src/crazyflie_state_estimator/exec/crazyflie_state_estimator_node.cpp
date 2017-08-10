@@ -36,71 +36,26 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LQR controller for the Crazyflie. Uses an LQR control matrix for hovering
-// at each specified reference point.
+// The CrazyflieStateEstimator node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
-#define CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
-
-#include <crazyflie_utils/types.h>
-#include <crazyflie_utils/angles.h>
-#include <crazyflie_msgs/StateStamped.h>
-#include <crazyflie_msgs/ControlStamped.h>
-
 #include <ros/ros.h>
-#include <math.h>
-#include <fstream>
+#include <crazyflie_state_estimator/crazyflie_state_estimator.h>
 
-class CrazyflieLQR {
-public:
-  ~CrazyflieLQR() {}
-  CrazyflieLQR()
-    : K_(MatrixXd::Zero(7, 12)),
-      u_ref_(VectorXd::Zero(7)),
-      x_ref_(VectorXd::Zero(12)) {}
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "crazyflie_state_estimator");
+  ros::NodeHandle n("~");
 
-  // Initialize this class by reading parameters and loading callbacks.
-  bool Initialize(const ros::NodeHandle& n);
+  CrazyflieStateEstimator state_estimator;
 
-private:
-  // Load parameters and register callbacks.
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
+  if (!state_estimator.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize crazyflie_state_estimator.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
+  }
 
-  // Process an incoming reference point.
-  void ReferenceCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
+  ros::spin();
 
-  // Process an incoming state measurement.
-  void StateCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
-
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
-
-  std::string state_topic_;
-  std::string reference_topic_;
-  std::string control_topic_;
-
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
-
-  std::string K_filename_;
-  std::string u_ref_filename_;
-  std::string x_ref_filename_;
-
-  // Dimensions of control and state spaces.
-  static const size_t U_DIM;
-  static const size_t X_DIM;
-
-  // Initialized flag and name.
-  bool initialized_;
-  std::string name_;
-}; //\class CrazyflieLQR
-
-#endif
+  return EXIT_SUCCESS;
+}

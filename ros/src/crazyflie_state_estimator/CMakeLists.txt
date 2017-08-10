@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(crazyflie_lqr)
+project(crazyflie_state_estimator)
 
 #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
@@ -7,7 +7,7 @@ project(crazyflie_lqr)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #endif()
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/crazyflie_lqr/modules)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/crazyflie_state_estimator/modules)
 message("Cmake module path: ${CMAKE_MODULE_PATH}")
 
 find_package(Eigen3 REQUIRED)
@@ -16,8 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   visualization_msgs
   geometry_msgs
-  crazyflie_msgs
   crazyflie_utils
+  crazyflie_msgs
   tf2_ros
   message_generation
 )
@@ -29,8 +29,8 @@ catkin_package(
     roscpp
     visualization_msgs
     geometry_msgs
-    crazyflie_msgs
     crazyflie_utils
+    crazyflie_msgs
     tf2_ros
     message_runtime
   DEPENDS

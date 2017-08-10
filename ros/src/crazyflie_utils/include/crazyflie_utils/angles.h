@@ -36,71 +36,45 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LQR controller for the Crazyflie. Uses an LQR control matrix for hovering
-// at each specified reference point.
+// Angle manipulation utilities.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
-#define CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
+#ifndef CRAZYFLIE_UTILS_ANGLES_H
+#define CRAZYFLIE_UTILS_ANGLES_H
 
 #include <crazyflie_utils/types.h>
-#include <crazyflie_utils/angles.h>
-#include <crazyflie_msgs/StateStamped.h>
-#include <crazyflie_msgs/ControlStamped.h>
 
-#include <ros/ros.h>
-#include <math.h>
-#include <fstream>
+namespace angles {
+  // Convert degrees to radians.
+  static inline double DegreesToRadians(double d) {
+    return d * M_PI / 180.0;
+  }
 
-class CrazyflieLQR {
-public:
-  ~CrazyflieLQR() {}
-  CrazyflieLQR()
-    : K_(MatrixXd::Zero(7, 12)),
-      u_ref_(VectorXd::Zero(7)),
-      x_ref_(VectorXd::Zero(12)) {}
+  // Convert radians to degrees.
+  static inline double RadiansToDegrees(double r) {
+    return r * 180.0 / M_PI;
+  }
 
-  // Initialize this class by reading parameters and loading callbacks.
-  bool Initialize(const ros::NodeHandle& n);
+  // Wrap angle in degrees to [-180, 180].
+  static inline double WrapAngleDegrees(double d) {
+    d = std::fmod(d + 180.0, 360.0) - 180.0;
 
-private:
-  // Load parameters and register callbacks.
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
+    if (d < -180.0)
+      d += 360.0;
 
-  // Process an incoming reference point.
-  void ReferenceCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
+    return d;
+  }
 
-  // Process an incoming state measurement.
-  void StateCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
+  // Wrap angle in radians to [-pi, pi].
+  static inline double WrapAngleRadians(double r) {
+    r = std::fmod(r + M_PI, 2.0 * M_PI) - M_PI;
 
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
+    if (r < -M_PI)
+      r += 2.0 * M_PI;
 
-  std::string state_topic_;
-  std::string reference_topic_;
-  std::string control_topic_;
-
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
-
-  std::string K_filename_;
-  std::string u_ref_filename_;
-  std::string x_ref_filename_;
-
-  // Dimensions of control and state spaces.
-  static const size_t U_DIM;
-  static const size_t X_DIM;
-
-  // Initialized flag and name.
-  bool initialized_;
-  std::string name_;
-}; //\class CrazyflieLQR
+    return r;
+  }
+} //\namespace angles
 
 #endif
