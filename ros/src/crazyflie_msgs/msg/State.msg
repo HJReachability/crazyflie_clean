@@ -10,10 +10,3 @@ float64 yaw
 float64 roll_dot
 float64 pitch_dot
 float64 yaw_dot
-float64 U0
-float64 U1
-float64 U2
-float64 U3
-float64 U4
-float64 U5
-float64 U6
