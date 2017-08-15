@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="uri" default="radio://0/90/2M" />
-  <arg name="frame" default="/vicon/crazyflie/crazyflie" />
+  <arg name="uri" default="radio://0/25/2M/E7E7E7E701" />
+  <arg name="frame" default="/vicon/cf7/cf7" />
   <arg name="joy_dev" default="/dev/input/js0" />
   <arg name="x" default="0" />
   <arg name="y" default="0" />
@@ -14,7 +14,7 @@
     <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri)" />
       <arg name="tf_prefix" value="crazyflie" />
-      <arg name="enable_logging" value="False" />
+      <arg name="enable_logging" value="True" />
     </include>
 
     <node name="joy" pkg="joy" type="joy_node" output="screen">
@@ -38,13 +38,14 @@
     </node>
 
     <node pkg="tf" type="static_transform_publisher" name="baselink_broadcaster" args="0 0 0 0 0 0 1 $(arg frame) /crazyflie/base_link 100" />
+
   </group>
 
   <!-- run vicon bridge -->
-  <include file="$(find vicon_bridge)/launch/vicon.launch"/>
+  <!--include file="$(find vicon_bridge)/launch/vicon.launch"/-->
 
-  <!-- run rviz -->
+  <!-- run rviz
   <param name="robot_description" command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find crazyflie_demo)/launch/crazyflie_pos.rviz" required="true" />
-
+  -->
 </launch>

@@ -203,6 +203,8 @@ private:
       float yawrate = msg->angular.z;
       uint16_t thrust = std::min<uint16_t>(std::max<float>(msg->linear.z, 0.0), 60000);
 
+      //      ROS_INFO("Setpoint: roll = %f, pitch = %f, yawrate = %f, thrust = %u", roll, pitch, yawrate, thrust);
+
       m_cf.sendSetpoint(roll, pitch, yawrate, thrust);
       m_sentSetpoint = true;
     }

@@ -105,7 +105,7 @@ void Crazyflie::sendSetpoint(
   uint16_t thrust)
 {
   crtpSetpointRequest request(roll, pitch, yawrate, thrust);
-  sendPacket((const uint8_t*)&request, sizeof(request));
+  const bool ack = sendPacket((const uint8_t*)&request, sizeof(request));
 }
 
 void Crazyflie::sendExternalPositionUpdate(
