@@ -43,13 +43,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_state_estimator/crazyflie_state_estimator.h>
+#include <crazyflie_state_estimator/full_state_estimator.h>
 
-const size_t CrazyflieStateEstimator::X_DIM = 12;
+const size_t FullStateEstimator::X_DIM = 12;
 
 // Initialize this class by reading parameters and loading callbacks.
-bool CrazyflieStateEstimator::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "crazyflie_lqr");
+bool FullStateEstimator::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "full_state_estimator");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -66,7 +66,7 @@ bool CrazyflieStateEstimator::Initialize(const ros::NodeHandle& n) {
 }
 
 // Load parameters.
-bool CrazyflieStateEstimator::LoadParameters(const ros::NodeHandle& n) {
+bool FullStateEstimator::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
   // State topic.
@@ -88,22 +88,22 @@ bool CrazyflieStateEstimator::LoadParameters(const ros::NodeHandle& n) {
 }
 
 // Register callbacks.
-bool CrazyflieStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
+bool FullStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // State publisher.
-  state_pub_ = nl.advertise<crazyflie_msgs::StateStamped>(
+  state_pub_ = nl.advertise<crazyflie_msgs::FullStateStamped>(
     state_topic_.c_str(), 10, false);
 
   // Timer.
   timer_ = nl.createTimer(
-    ros::Duration(dt_), &CrazyflieStateEstimator::TimerCallback, this);
+    ros::Duration(dt_), &FullStateEstimator::TimerCallback, this);
 
   return true;
 }
 
 // Whenever timer rings, query tf, update state estimate, and publish.
-void CrazyflieStateEstimator::TimerCallback(const ros::TimerEvent& e) {
+void FullStateEstimator::TimerCallback(const ros::TimerEvent& e) {
   const ros::Time right_now = ros::Time::now();
 
   // Get the current transform from tf.
@@ -175,7 +175,7 @@ void CrazyflieStateEstimator::TimerCallback(const ros::TimerEvent& e) {
   last_time_ = right_now;
 
   // Publish.
-  crazyflie_msgs::StateStamped msg;
+  crazyflie_msgs::FullStateStamped msg;
 
   msg.header.frame_id = fixed_frame_id_;
   msg.header.stamp = right_now;

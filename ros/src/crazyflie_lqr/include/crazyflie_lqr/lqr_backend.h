@@ -46,43 +46,31 @@
 
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
-#include <crazyflie_msgs/StateStamped.h>
-#include <crazyflie_msgs/ControlStamped.h>
 
 #include <ros/ros.h>
 #include <math.h>
 #include <fstream>
 
-class CrazyflieLQR {
+class LqrBackend {
 public:
-  ~CrazyflieLQR() {}
-  CrazyflieLQR()
-    : K_(MatrixXd::Zero(7, 12)),
-      u_ref_(VectorXd::Zero(7)),
-      x_ref_(VectorXd::Zero(12)) {}
+  ~LqrBackend() {}
+  explicit LqrBackend()
+    : intialized_(false) {}
 
   // Initialize this class by reading parameters and loading callbacks.
   bool Initialize(const ros::NodeHandle& n);
+
+  // Set references.
+  void SetStateReference(const VectorXd& x_ref);
+  void SetControlReference(const VectorXd& u_ref);
+
+  // Compute LQR control given the current state.
+  VectorXd Control(const VectorXd& x) const;
 
 private:
   // Load parameters and register callbacks.
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
-
-  // Process an incoming reference point.
-  void ReferenceCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
-
-  // Process an incoming state measurement.
-  void StateCallback(const crazyflie_msgs::StateStamped::ConstPtr& msg);
-
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
-
-  std::string state_topic_;
-  std::string reference_topic_;
-  std::string control_topic_;
 
   // K matrix and reference state/control (to fight gravity). These are
   // hard-coded since they will not change.
@@ -95,12 +83,12 @@ private:
   std::string x_ref_filename_;
 
   // Dimensions of control and state spaces.
-  static const size_t U_DIM;
-  static const size_t X_DIM;
+  size_t x_dim_;
+  size_t u_dim_;
 
   // Initialized flag and name.
   bool initialized_;
   std::string name_;
-}; //\class CrazyflieLQR
+}; //\class LqrBackend
 
 #endif

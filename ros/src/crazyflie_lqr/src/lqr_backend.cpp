@@ -41,14 +41,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_lqr/crazyflie_lqr.h>
-
-const size_t CrazyflieLQR::U_DIM = 7;
-const size_t CrazyflieLQR::X_DIM = 12;
+#include <crazyflie_lqr/lqr_backend.h>
 
 // Initialize this class by reading parameters and loading callbacks.
-bool CrazyflieLQR::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "crazyflie_lqr");
+bool LqrBackend::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "lqr_backend");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -61,6 +58,10 @@ bool CrazyflieLQR::Initialize(const ros::NodeHandle& n) {
   }
 
   // Set up file io to read K, x_ref, and u_ref from disk.
+  K_ = MatrixXd::Zero(u_dim_, x_dim_);
+  x_ref_ = VectorXd::Zero(x_dim_);
+  u_ref_ = VectorXd::Zero(u_dim_);
+
   std::ifstream K_file(K_filename_);
   std::ifstream x_ref_file(x_ref_filename_);
   std::ifstream u_ref_file(u_ref_filename_);
@@ -98,7 +99,7 @@ bool CrazyflieLQR::Initialize(const ros::NodeHandle& n) {
 }
 
 // Load parameters.
-bool CrazyflieLQR::LoadParameters(const ros::NodeHandle& n) {
+bool LqrBackend::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
   // Text files with K, x_ref, u_ref.
@@ -111,112 +112,58 @@ bool CrazyflieLQR::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::search("crazyflie_lqr/x_ref_file", key)) return false;
   if (!ros::param::get(key, x_ref_filename_)) return false;
 
-  // Topics.
-  if (!ros::param::search("crazyflie_lqr/state_topic", key)) return false;
-  if (!ros::param::get(key, state_topic_)) return false;
+  // Dimensions.
+  int dimension = 1;
+  if (!ros::param::search("crazyflie_lqr/x_dim", key)) return false;
+  if (!ros::param::get(key, dimension)) return false;
+  x_dim_ = static_cast<size_t>(dimension);
 
-  if (!ros::param::search("crazyflie_lqr/reference_topic", key)) return false;
-  if (!ros::param::get(key, reference_topic_)) return false;
-
-  if (!ros::param::search("crazyflie_lqr/control_topic", key)) return false;
-  if (!ros::param::get(key, control_topic_)) return false;
+  if (!ros::param::search("crazyflie_lqr/u_dim", key)) return false;
+  if (!ros::param::get(key, dimension)) return false;
+  u_dim_ = static_cast<size_t>(dimension);
 
   return true;
 }
 
 // Register callbacks.
-bool CrazyflieLQR::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
-
-  // Subscribers.
-  state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 10, &CrazyflieLQR::StateCallback, this);
-  reference_sub_ = nl.subscribe(
-    reference_topic_.c_str(), 10, &CrazyflieLQR::ReferenceCallback, this);
-
-  // Control publisher.
-  control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
-    control_topic_.c_str(), 10, false);
-
+bool LqrBackend::RegisterCallbacks(const ros::NodeHandle& n) {
   return true;
 }
 
-// Process an incoming reference point change.
-void CrazyflieLQR::ReferenceCallback(
-  const crazyflie_msgs::StateStamped::ConstPtr& msg) {
-  x_ref_(0) = msg->state.x;
-  x_ref_(1) = msg->state.y;
-  x_ref_(2) = msg->state.z;
-  x_ref_(3) = msg->state.x_dot;
-  x_ref_(4) = msg->state.y_dot;
-  x_ref_(5) = msg->state.z_dot;
-  x_ref_(6) = msg->state.roll;
-  x_ref_(7) = msg->state.pitch;
-  x_ref_(8) = msg->state.yaw;
-  x_ref_(9) = msg->state.roll_dot;
-  x_ref_(10) = msg->state.pitch_dot;
-  x_ref_(11) = msg->state.yaw_dot;
+// Set references.
+void LqrBackend::SetStateReference(const VectorXd& x_ref) {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (x_ref.size() != x_dim_) {
+    ROS_ERROR("%s: State reference was the wrong dimension: %zu vs. %zu.",
+              name_.c_str(), x_ref.size(), x_dim_);
+    return;
+  }
+#endif
 
-  ROS_INFO("%s: Set new reference point.", name_.c_str());
+  x_ref_ = x_ref;
 }
 
-// Process an incoming state measurement.
-void CrazyflieLQR::StateCallback(
-  const crazyflie_msgs::StateStamped::ConstPtr& msg) {
-  // Read the message into the state and compute relative state.
-  VectorXd x(12);
-  x(0) = msg->state.x;
-  x(1) = msg->state.y;
-  x(2) = msg->state.z;
-  x(3) = msg->state.x_dot;
-  x(4) = msg->state.y_dot;
-  x(5) = msg->state.z_dot;
-  x(6) = msg->state.roll;
-  x(7) = msg->state.pitch;
-  x(8) = msg->state.yaw;
-  x(9) = msg->state.roll_dot;
-  x(10) = msg->state.pitch_dot;
-  x(11) = msg->state.yaw_dot;
+void LqrBackend::SetControlReference(const VectorXd& u_ref) {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (u_ref.size() != u_dim_) {
+    ROS_ERROR("%s: Control reference was the wrong dimension: %zu vs. %zu.",
+              name_.c_str(), u_ref.size(), u_dim_);
+    return;
+  }
+#endif
 
-  VectorXd x_rel = x - x_ref_;
+  u_ref_ = u_ref;
+}
 
-  ROS_INFO("%s: StateCallback was called.", name_.c_str());
-  std::cout << "Relative state: " << x_rel.transpose() << std::endl;
+// Compute LQR control given the current state.
+VectorXd LqrBackend::Control(const VectorXd& x) const {
+#ifdef ENABLE_DEBUG_MESSAGES
+  if (x.size() != x_dim_) {
+    ROS_ERROR("%s: State was the wrong dimension: %zu vs. %zu.",
+              name_.c_str(), x.size(), x_dim_);
+    return u_ref_;
+  }
+#endif
 
-
-  // Rotate x and y coordinates.
-  const double cos_y = std::cos(x(8));
-  const double sin_y = std::sin(x(8));
-
-  const double rot_x = cos_y * x_rel(0) + sin_y * x_rel(1);
-  const double rot_y = -sin_y * x_rel(0) + cos_y * x_rel(1);
-  const double rot_x_dot = cos_y * x_rel(3) + sin_y * x_rel(4);
-  const double rot_y_dot = -sin_y * x_rel(3) + cos_y * x_rel(4);
-
-  x_rel(0) = rot_x;
-  x_rel(1) = rot_y;
-  x_rel(2) = rot_x_dot;
-  x_rel(3) = rot_y_dot;
-
-  // Wrap angles.
-  x_rel(6) = angles::WrapAngleRadians(x_rel(6));
-  x_rel(7) = angles::WrapAngleRadians(x_rel(7));
-  x_rel(8) = angles::WrapAngleRadians(x_rel(8));
-
-  // Compute optimal control.
-  VectorXd u = K_ * x_rel + u_ref_;
-  u(0) = angles::WrapAngleRadians(u(0));
-  u(1) = angles::WrapAngleRadians(u(1));
-  u(2) = angles::WrapAngleRadians(u(2));
-
-  std::cout << "Control: " << u.transpose() << std::endl;
-
-  // Publish.
-  crazyflie_msgs::ControlStamped control_msg;
-  control_msg.control.roll = u(0);
-  control_msg.control.pitch = u(1);
-  control_msg.control.yaw_dot = u(2);
-  control_msg.control.thrust = u(3);
-
-  control_pub_.publish(control_msg);
+  return K_ * (x - x_ref_) + u_ref_;
 }

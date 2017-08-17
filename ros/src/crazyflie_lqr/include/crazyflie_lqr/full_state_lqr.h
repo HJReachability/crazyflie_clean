@@ -36,26 +36,62 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The CrazyflieStateEstimator node.
+// LQR hover controller for the Crazyflie. Assumes that the state space is
+// given by the FullStateStamped message type, which is a 12D model.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
+#define CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
+
+#include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/FullStateStamped.h>
+#include <crazyflie_msgs/ControlStamped.h>
+
 #include <ros/ros.h>
-#include <crazyflie_state_estimator/crazyflie_state_estimator.h>
+#include <math.h>
+#include <fstream>
 
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "crazyflie_state_estimator");
-  ros::NodeHandle n("~");
+class FullStateLqr {
+public:
+  ~FullStateLqr() {}
+  explicit FullStateLqr()
+    : initialized_(false) {}
 
-  CrazyflieStateEstimator state_estimator;
+  // Initialize this class by reading parameters and loading callbacks.
+  bool Initialize(const ros::NodeHandle& n);
 
-  if (!state_estimator.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize crazyflie_state_estimator.",
-              ros::this_node::getName().c_str());
-    return EXIT_FAILURE;
-  }
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  ros::spin();
+  // Process an incoming reference point.
+  void ReferenceCallback(const crazyflie_msgs::FullStateStamped::ConstPtr& msg);
 
-  return EXIT_SUCCESS;
-}
+  // Process an incoming state measurement.
+  void StateCallback(const crazyflie_msgs::FullStateStamped::ConstPtr& msg);
+
+  // Dimensions of control and state spaces.
+  static const size_t U_DIM;
+  static const size_t X_DIM;
+
+  // Backend LQR controller.
+  LqrBackend lqr_;
+
+  // Publishers and subscribers.
+  ros::Subscriber state_sub_;
+  ros::Subscriber reference_sub_;
+  ros::Publisher control_pub_;
+
+  std::string state_topic_;
+  std::string reference_topic_;
+  std::string control_topic_;
+
+  // Initialized flag and name.
+  bool initialized_;
+  std::string name_;
+}; //\class FullStateLqr
+
+#endif

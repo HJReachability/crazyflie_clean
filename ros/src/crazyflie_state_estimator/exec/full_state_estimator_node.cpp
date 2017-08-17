@@ -35,75 +35,27 @@
  */
 
 ///////////////////////////////////////////////////////////////////////////////
-///
-// State estimator node. Sets a recurring timer and every time it rings,
-// this node will query tf for the transform between the specified robot
-// frame and the fixed frame, merge it with the previous state estimate, and
-// publish the new estimate.
+//
+// The FullStateEstimator node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_STATE_ESTIMATOR_CRAZYFLIE_STATE_ESTIMATOR_H
-#define CRAZYFLIE_STATE_ESTIMATOR_CRAZYFLIE_STATE_ESTIMATOR_H
-
-#include <crazyflie_utils/types.h>
-#include <crazyflie_utils/angles.h>
-#include <crazyflie_msgs/StateStamped.h>
-
-#include <geometry_msgs/TransformStamped.h>
-#include <tf2_ros/transform_listener.h>
-
 #include <ros/ros.h>
-#include <math.h>
+#include <crazyflie_state_estimator/full_state_estimator.h>
 
-class CrazyflieStateEstimator {
-public:
-  ~CrazyflieStateEstimator() {}
-  CrazyflieStateEstimator()
-    : x_(VectorXd::Zero(X_DIM)),
-      tf_listener_(tf_buffer_),
-      initialized_(false),
-      first_update_(true) {}
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "full_state_estimator");
+  ros::NodeHandle n("~");
 
-  // Initialize this class by reading parameters and loading callbacks.
-  bool Initialize(const ros::NodeHandle& n);
+  FullStateEstimator state_estimator;
 
-private:
-  // Load parameters and register callbacks.
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
+  if (!state_estimator.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize full_state_estimator.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
+  }
 
-  // Whenever timer rings, query tf, update state estimate, and publish.
-  void TimerCallback(const ros::TimerEvent& e);
+  ros::spin();
 
-  // Running state estimate.
-  VectorXd x_;
-
-  // State publisher.
-  ros::Publisher state_pub_;
-  std::string state_topic_;
-
-  // Frames of reference.
-  std::string fixed_frame_id_;
-  std::string robot_frame_id_;
-
-  // Set a recurring timer for a discrete-time controller. Also keep track
-  // of the most recent time when the timer fired.
-  ros::Time last_time_;
-  ros::Timer timer_;
-  double dt_;
-
-  // Buffer and listener to get current pose.
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
-
-  // State dimension as a static constant.
-  static const size_t X_DIM;
-
-  // Name, and flags for initialization and first state update.
-  bool initialized_;
-  bool first_update_;
-  std::string name_;
-}; //\class CrazyflieStateEstimator
-
-#endif
+  return EXIT_SUCCESS;
+}
