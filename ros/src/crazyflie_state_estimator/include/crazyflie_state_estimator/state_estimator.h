@@ -36,36 +36,79 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 ///
-// FullState estimator node. Sets a recurring timer and every time it rings,
+// State estimator node. Sets a recurring timer and every time it rings,
 // this node will query tf for the transform between the specified robot
 // frame and the fixed frame, merge it with the previous state estimate, and
 // publish the new estimate.
 //
+// Derived classes specialize depending on the specific state space.
+//
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_STATE_ESTIMATOR_FULL_STATE_ESTIMATOR_H
-#define CRAZYFLIE_STATE_ESTIMATOR_FULL_STATE_ESTIMATOR_H
+#ifndef CRAZYFLIE_STATE_ESTIMATOR_STATE_ESTIMATOR_H
+#define CRAZYFLIE_STATE_ESTIMATOR_STATE_ESTIMATOR_H
 
-#include <crazyflie_state_estimator/state_estimator.h>
-#include <crazyflie_msgs/FullStateStamped.h>
+#include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
+
+#include <geometry_msgs/TransformStamped.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <ros/ros.h>
 #include <math.h>
 
-class FullStateEstimator : public StateEstimator {
+class StateEstimator {
 public:
-  ~FullStateEstimator() {}
-  explicit FullStateEstimator()
-    : StateEstimator() {}
+  ~StateEstimator() {}
 
-private:
-  // Register callbacks.
-  bool RegisterCallbacks(const ros::NodeHandle& n);
+  // Initialize this class by reading parameters and loading callbacks.
+  bool Initialize(const ros::NodeHandle& n);
+
+protected:
+  explicit StateEstimator()
+    : tf_listener_(tf_buffer_),
+      initialized_(false),
+      first_update_(true) {}
+
+  // Load parameters and register callbacks. These may/must be overridden
+  // by derived classes.
+  virtual bool LoadParameters(const ros::NodeHandle& n);
+  virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
+
+  // Whenever timer rings, query tf, update state estimate, and publish.
+  void TimerCallback(const ros::TimerEvent& e);
 
   // Merge a pose measured at the given time (specified by translation
   // and euler angles) into the current state estimate.
-  void Update(const Vector3d& translation, const Vector3d& euler,
-              const ros::Time& stamp);
-}; //\class FullStateEstimator
+  virtual void Update(const Vector3d& translation, const Vector3d& euler,
+                      const ros::Time& stamp) = 0;
+
+  // Running state estimate.
+  VectorXd x_;
+  size_t x_dim_;
+
+  // State publisher.
+  ros::Publisher state_pub_;
+  std::string state_topic_;
+
+  // Frames of reference.
+  std::string fixed_frame_id_;
+  std::string robot_frame_id_;
+
+  // Set a recurring timer for a discrete-time controller. Also keep track
+  // of the most recent time when the timer fired.
+  ros::Time last_time_;
+  ros::Timer timer_;
+  double dt_;
+
+  // Buffer and listener to get current pose.
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
+
+  // Name, and flags for initialization and first state update.
+  bool initialized_;
+  bool first_update_;
+  std::string name_;
+}; //\class StateEstimator
 
 #endif

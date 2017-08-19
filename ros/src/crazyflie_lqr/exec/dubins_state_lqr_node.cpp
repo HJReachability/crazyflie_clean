@@ -35,37 +35,27 @@
  */
 
 ///////////////////////////////////////////////////////////////////////////////
-///
-// FullState estimator node. Sets a recurring timer and every time it rings,
-// this node will query tf for the transform between the specified robot
-// frame and the fixed frame, merge it with the previous state estimate, and
-// publish the new estimate.
+//
+// The DubinsStateLqr node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_STATE_ESTIMATOR_FULL_STATE_ESTIMATOR_H
-#define CRAZYFLIE_STATE_ESTIMATOR_FULL_STATE_ESTIMATOR_H
-
-#include <crazyflie_state_estimator/state_estimator.h>
-#include <crazyflie_msgs/FullStateStamped.h>
-
 #include <ros/ros.h>
-#include <math.h>
+#include <crazyflie_lqr/dubins_state_lqr.h>
 
-class FullStateEstimator : public StateEstimator {
-public:
-  ~FullStateEstimator() {}
-  explicit FullStateEstimator()
-    : StateEstimator() {}
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "dubins_state_lqr");
+  ros::NodeHandle n("~");
 
-private:
-  // Register callbacks.
-  bool RegisterCallbacks(const ros::NodeHandle& n);
+  DubinsStateLqr lqr;
 
-  // Merge a pose measured at the given time (specified by translation
-  // and euler angles) into the current state estimate.
-  void Update(const Vector3d& translation, const Vector3d& euler,
-              const ros::Time& stamp);
-}; //\class FullStateEstimator
+  if (!lqr.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize dubins_state_lqr.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
+  }
 
-#endif
+  ros::spin();
+
+  return EXIT_SUCCESS;
+}

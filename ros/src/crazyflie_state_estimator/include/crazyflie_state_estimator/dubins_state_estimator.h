@@ -43,19 +43,19 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_STATE_ESTIMATOR_FULL_STATE_ESTIMATOR_H
-#define CRAZYFLIE_STATE_ESTIMATOR_FULL_STATE_ESTIMATOR_H
+#ifndef CRAZYFLIE_STATE_ESTIMATOR_DUBINS_STATE_ESTIMATOR_H
+#define CRAZYFLIE_STATE_ESTIMATOR_DUBINS_STATE_ESTIMATOR_H
 
 #include <crazyflie_state_estimator/state_estimator.h>
-#include <crazyflie_msgs/FullStateStamped.h>
+#include <crazyflie_msgs/DubinsStateStamped.h>
 
 #include <ros/ros.h>
 #include <math.h>
 
-class FullStateEstimator : public StateEstimator {
+class DubinsStateEstimator : public StateEstimator {
 public:
-  ~FullStateEstimator() {}
-  explicit FullStateEstimator()
+  ~DubinsStateEstimator() {}
+  explicit DubinsStateEstimator()
     : StateEstimator() {}
 
 private:

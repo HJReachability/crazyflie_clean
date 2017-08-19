@@ -36,18 +36,18 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Derived from StateEstimator, for the 12D FullState message type.
+// Derived from StateEstimator, for the 7D DubinsState message type.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_state_estimator/full_state_estimator.h>
+#include <crazyflie_state_estimator/dubins_state_estimator.h>
 
 // Register callbacks.
-bool FullStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
+bool DubinsStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // State publisher.
-  state_pub_ = nl.advertise<crazyflie_msgs::FullStateStamped>(
+  state_pub_ = nl.advertise<crazyflie_msgs::DubinsStateStamped>(
     state_topic_.c_str(), 10, false);
 
   return true;
@@ -55,7 +55,7 @@ bool FullStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
 
 // Merge a pose measured at the given time (specified by translation
 // and euler angles) into the current state estimate.
-void FullStateEstimator::Update(const Vector3d& translation,
+void DubinsStateEstimator::Update(const Vector3d& translation,
                                 const Vector3d& euler,
                                 const ros::Time& stamp) {
   // Catch first update.
@@ -68,13 +68,7 @@ void FullStateEstimator::Update(const Vector3d& translation,
     x_(4) = 0.0;
     x_(5) = 0.0;
 
-    x_(6) = euler(0);
-    x_(7) = euler(1);
-    x_(8) = euler(2);
-
-    x_(9) = 0.0;
-    x_(10) = 0.0;
-    x_(11) = 0.0;
+    x_(6) = euler(2);
 
     first_update_ = false;
   } else {
@@ -87,22 +81,16 @@ void FullStateEstimator::Update(const Vector3d& translation,
     x_(4) = (translation(1) - x_(1)) / dt;
     x_(5) = (translation(2) - x_(2)) / dt;
 
-    x_(9) = (euler(0) - x_(6)) / dt;
-    x_(10) = (euler(1) - x_(7)) / dt;
-    x_(11) = (euler(2) - x_(8)) / dt;
-
     // Update position/orientation.
     x_(0) = translation(0);
     x_(1) = translation(1);
     x_(2) = translation(2);
 
-    x_(6) = euler(0);
-    x_(7) = euler(1);
-    x_(8) = euler(2);
+    x_(6) = euler(2);
   }
 
   // Publish.
-  crazyflie_msgs::FullStateStamped msg;
+  crazyflie_msgs::DubinsStateStamped msg;
 
   msg.header.frame_id = fixed_frame_id_;
   msg.header.stamp = stamp;
@@ -113,12 +101,7 @@ void FullStateEstimator::Update(const Vector3d& translation,
   msg.state.x_dot = x_(3);
   msg.state.y_dot = x_(4);
   msg.state.z_dot = x_(5);
-  msg.state.roll = x_(6);
-  msg.state.pitch = x_(7);
-  msg.state.yaw = x_(8);
-  msg.state.roll_dot = x_(9);
-  msg.state.pitch_dot = x_(10);
-  msg.state.yaw_dot = x_(11);
+  msg.state.yaw = x_(6);
 
   state_pub_.publish(msg);
 }

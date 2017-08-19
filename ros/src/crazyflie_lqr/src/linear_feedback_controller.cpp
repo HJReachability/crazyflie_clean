@@ -41,11 +41,11 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_lqr/lqr_backend.h>
+#include <crazyflie_lqr/linear_feedback_controller.h>
 
-// Initialize this class by reading parameters and loading callbacks.
-bool LqrBackend::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "lqr_backend");
+// Load parameters.
+bool LinearFeedbackController::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "linear_feedback_controller");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -68,8 +68,8 @@ bool LqrBackend::Initialize(const ros::NodeHandle& n) {
 
   // Read K.
   if (K_file.is_open()) {
-    for (size_t ii = 0; ii < U_DIM && K_file.good(); ii++)
-      for (size_t jj = 0; jj < X_DIM && K_file.good(); jj++)
+    for (size_t ii = 0; ii < u_dim_ && K_file.good(); ii++)
+      for (size_t jj = 0; jj < x_dim_ && K_file.good(); jj++)
         K_file >> K_(ii, jj);
   } else {
     ROS_ERROR("%s: Could not find %s.", name_.c_str(), K_filename_.c_str());
@@ -78,16 +78,16 @@ bool LqrBackend::Initialize(const ros::NodeHandle& n) {
 
   // Read x_ref.
   if (x_ref_file.is_open()) {
-    for (size_t ii = 0; ii < X_DIM && x_ref_file.good(); ii++)
+    for (size_t ii = 0; ii < x_dim_ && x_ref_file.good(); ii++)
       x_ref_file >> x_ref_(ii);
   } else {
     ROS_ERROR("%s: Could not find %s.", name_.c_str(), x_ref_filename_.c_str());
     return false;
   }
 
-  // Read x_ref.
+  // Read u_ref.
   if (u_ref_file.is_open()) {
-    for (size_t ii = 0; ii < U_DIM && u_ref_file.good(); ii++)
+    for (size_t ii = 0; ii < u_dim_ && u_ref_file.good(); ii++)
       u_ref_file >> u_ref_(ii);
   } else {
     ROS_ERROR("%s: Could not find %s.", name_.c_str(), u_ref_filename_.c_str());
@@ -98,8 +98,8 @@ bool LqrBackend::Initialize(const ros::NodeHandle& n) {
   return true;
 }
 
-// Load parameters.
-bool LqrBackend::LoadParameters(const ros::NodeHandle& n) {
+// Load parameters. This may be overridden by derived classes.
+bool LinearFeedbackController::LoadParameters(const ros::NodeHandle& n) {
   std::string key;
 
   // Text files with K, x_ref, u_ref.
@@ -122,42 +122,27 @@ bool LqrBackend::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::get(key, dimension)) return false;
   u_dim_ = static_cast<size_t>(dimension);
 
+  // Topics.
+  if (!ros::param::search("crazyflie_lqr/state_topic", key)) return false;
+  if (!ros::param::get(key, state_topic_)) return false;
+
+  if (!ros::param::search("crazyflie_lqr/reference_topic", key)) return false;
+  if (!ros::param::get(key, reference_topic_)) return false;
+
+  if (!ros::param::search("crazyflie_lqr/control_topic", key)) return false;
+  if (!ros::param::get(key, control_topic_)) return false;
+
   return true;
-}
-
-// Register callbacks.
-bool LqrBackend::RegisterCallbacks(const ros::NodeHandle& n) {
-  return true;
-}
-
-// Set references.
-void LqrBackend::SetStateReference(const VectorXd& x_ref) {
-#ifdef ENABLE_DEBUG_MESSAGES
-  if (x_ref.size() != x_dim_) {
-    ROS_ERROR("%s: State reference was the wrong dimension: %zu vs. %zu.",
-              name_.c_str(), x_ref.size(), x_dim_);
-    return;
-  }
-#endif
-
-  x_ref_ = x_ref;
-}
-
-void LqrBackend::SetControlReference(const VectorXd& u_ref) {
-#ifdef ENABLE_DEBUG_MESSAGES
-  if (u_ref.size() != u_dim_) {
-    ROS_ERROR("%s: Control reference was the wrong dimension: %zu vs. %zu.",
-              name_.c_str(), u_ref.size(), u_dim_);
-    return;
-  }
-#endif
-
-  u_ref_ = u_ref;
 }
 
 // Compute LQR control given the current state.
-VectorXd LqrBackend::Control(const VectorXd& x) const {
+VectorXd LinearFeedbackController::Control(const VectorXd& x) const {
 #ifdef ENABLE_DEBUG_MESSAGES
+  if (!initialized_) {
+    ROS_ERROR("LinearFeedbackController was not initialized.");
+    return VectorXd::Zero(1);
+  }
+
   if (x.size() != x_dim_) {
     ROS_ERROR("%s: State was the wrong dimension: %zu vs. %zu.",
               name_.c_str(), x.size(), x_dim_);

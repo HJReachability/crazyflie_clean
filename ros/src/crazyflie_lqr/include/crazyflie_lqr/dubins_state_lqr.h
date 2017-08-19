@@ -36,59 +36,39 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LQR controller for the Crazyflie. Uses an LQR control matrix for hovering
-// at each specified reference point.
+// LQR hover controller for the Crazyflie. Assumes that the state space is
+// given by the DubinsStateStamped message type, which is a 7D model.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
-#define CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
+#ifndef CRAZYFLIE_LQR_DUBINS_STATE_LQR_H
+#define CRAZYFLIE_LQR_DUBINS_STATE_LQR_H
 
+#include <crazyflie_lqr/linear_feedback_controller.h>
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/DubinsStateStamped.h>
+#include <crazyflie_msgs/ControlStamped.h>
 
 #include <ros/ros.h>
 #include <math.h>
 #include <fstream>
 
-class LqrBackend {
+class DubinsStateLqr : public LinearFeedbackController {
 public:
-  ~LqrBackend() {}
-  explicit LqrBackend()
-    : intialized_(false) {}
-
-  // Initialize this class by reading parameters and loading callbacks.
-  bool Initialize(const ros::NodeHandle& n);
-
-  // Set references.
-  void SetStateReference(const VectorXd& x_ref);
-  void SetControlReference(const VectorXd& u_ref);
-
-  // Compute LQR control given the current state.
-  VectorXd Control(const VectorXd& x) const;
+  ~DubinsStateLqr() {}
+  explicit DubinsStateLqr()
+    : LinearFeedbackController() {}
 
 private:
-  // Load parameters and register callbacks.
-  bool LoadParameters(const ros::NodeHandle& n);
+  // Register callbacks.
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
+  // Process an incoming reference point.
+  void ReferenceCallback(const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg);
 
-  std::string K_filename_;
-  std::string u_ref_filename_;
-  std::string x_ref_filename_;
-
-  // Dimensions of control and state spaces.
-  size_t x_dim_;
-  size_t u_dim_;
-
-  // Initialized flag and name.
-  bool initialized_;
-  std::string name_;
-}; //\class LqrBackend
+  // Process an incoming state measurement.
+  void StateCallback(const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg);
+}; //\class DubinsStateLqr
 
 #endif

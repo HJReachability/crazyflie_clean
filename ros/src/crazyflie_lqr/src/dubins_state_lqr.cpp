@@ -37,22 +37,22 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // LQR hover controller for the Crazyflie. Assumes that the state space is
-// given by the FullStateStamped message type, which is a 12D model.
+// given by the DubinsStateStamped message type, which is a 7D model.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_lqr/full_state_lqr.h>
+#include <crazyflie_lqr/dubins_state_lqr.h>
 
 // Register callbacks.
-bool FullStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
+bool DubinsStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Subscribers.
   state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 10, &FullStateLqr::StateCallback, this);
+    state_topic_.c_str(), 10, &DubinsStateLqr::StateCallback, this);
 
   reference_sub_ = nl.subscribe(
-    reference_topic_.c_str(), 10, &FullStateLqr::ReferenceCallback, this);
+    reference_topic_.c_str(), 10, &DubinsStateLqr::ReferenceCallback, this);
 
   // Control publisher.
   control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
@@ -62,25 +62,20 @@ bool FullStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
 }
 
 // Process an incoming reference point change.
-void FullStateLqr::ReferenceCallback(
-  const crazyflie_msgs::FullStateStamped::ConstPtr& msg) {
+void DubinsStateLqr::ReferenceCallback(
+  const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg) {
   x_ref_(0) = msg->state.x;
   x_ref_(1) = msg->state.y;
   x_ref_(2) = msg->state.z;
   x_ref_(3) = msg->state.x_dot;
   x_ref_(4) = msg->state.y_dot;
   x_ref_(5) = msg->state.z_dot;
-  x_ref_(6) = msg->state.roll;
-  x_ref_(7) = msg->state.pitch;
-  x_ref_(8) = msg->state.yaw;
-  x_ref_(9) = msg->state.roll_dot;
-  x_ref_(10) = msg->state.pitch_dot;
-  x_ref_(11) = msg->state.yaw_dot;
+  x_ref_(6) = msg->state.yaw;
 }
 
 // Process an incoming state measurement.
-void FullStateLqr::StateCallback(
-  const crazyflie_msgs::FullStateStamped::ConstPtr& msg) {
+void DubinsStateLqr::StateCallback(
+  const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg) {
   // Read the message into the state and compute relative state.
   VectorXd x(x_dim_);
   x(0) = msg->state.x;
@@ -89,18 +84,13 @@ void FullStateLqr::StateCallback(
   x(3) = msg->state.x_dot;
   x(4) = msg->state.y_dot;
   x(5) = msg->state.z_dot;
-  x(6) = msg->state.roll;
-  x(7) = msg->state.pitch;
-  x(8) = msg->state.yaw;
-  x(9) = msg->state.roll_dot;
-  x(10) = msg->state.pitch_dot;
-  x(11) = msg->state.yaw_dot;
+  x(6) = msg->state.yaw;
 
   VectorXd x_rel = x - x_ref_;
 
   // Rotate x and y coordinates.
-  const double cos_yaw = std::cos(x(8));
-  const double sin_yaw = std::sin(x(8));
+  const double cos_yaw = std::cos(x(6));
+  const double sin_yaw = std::sin(x(6));
 
   const double rot_x = cos_yaw * x_rel(0) + sin_yaw * x_rel(1);
   const double rot_y = -sin_yaw * x_rel(0) + cos_yaw * x_rel(1);
@@ -114,8 +104,6 @@ void FullStateLqr::StateCallback(
 
   // Wrap angles.
   x_rel(6) = angles::WrapAngleRadians(x_rel(6));
-  x_rel(7) = angles::WrapAngleRadians(x_rel(7));
-  x_rel(8) = angles::WrapAngleRadians(x_rel(8));
 
   // Compute optimal control.
   VectorXd u = K_ * x_rel + u_ref_;

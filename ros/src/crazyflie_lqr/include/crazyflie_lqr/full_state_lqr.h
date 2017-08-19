@@ -41,9 +41,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
-#define CRAZYFLIE_LQR_CRAZYFLIE_LQR_H
+#ifndef CRAZYFLIE_LQR_FULL_STATE_LQR_H
+#define CRAZYFLIE_LQR_FULL_STATE_LQR_H
 
+#include <crazyflie_lqr/linear_feedback_controller.h>
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
 #include <crazyflie_msgs/FullStateStamped.h>
@@ -53,18 +54,14 @@
 #include <math.h>
 #include <fstream>
 
-class FullStateLqr {
+class FullStateLqr : public LinearFeedbackController {
 public:
   ~FullStateLqr() {}
   explicit FullStateLqr()
-    : initialized_(false) {}
-
-  // Initialize this class by reading parameters and loading callbacks.
-  bool Initialize(const ros::NodeHandle& n);
+    : LinearFeedbackController() {}
 
 private:
-  // Load parameters and register callbacks.
-  bool LoadParameters(const ros::NodeHandle& n);
+  // Register callbacks.
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
   // Process an incoming reference point.
@@ -72,26 +69,6 @@ private:
 
   // Process an incoming state measurement.
   void StateCallback(const crazyflie_msgs::FullStateStamped::ConstPtr& msg);
-
-  // Dimensions of control and state spaces.
-  static const size_t U_DIM;
-  static const size_t X_DIM;
-
-  // Backend LQR controller.
-  LqrBackend lqr_;
-
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
-
-  std::string state_topic_;
-  std::string reference_topic_;
-  std::string control_topic_;
-
-  // Initialized flag and name.
-  bool initialized_;
-  std::string name_;
 }; //\class FullStateLqr
 
 #endif

@@ -35,37 +35,67 @@
  */
 
 ///////////////////////////////////////////////////////////////////////////////
-///
-// FullState estimator node. Sets a recurring timer and every time it rings,
-// this node will query tf for the transform between the specified robot
-// frame and the fixed frame, merge it with the previous state estimate, and
-// publish the new estimate.
+//
+// Linear feedback controller that reads in control/references from files.
+// Controllers for specific state spaces will be derived from this class.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_STATE_ESTIMATOR_FULL_STATE_ESTIMATOR_H
-#define CRAZYFLIE_STATE_ESTIMATOR_FULL_STATE_ESTIMATOR_H
+#ifndef CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
+#define CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
 
-#include <crazyflie_state_estimator/state_estimator.h>
-#include <crazyflie_msgs/FullStateStamped.h>
+#include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
 
 #include <ros/ros.h>
 #include <math.h>
+#include <fstream>
 
-class FullStateEstimator : public StateEstimator {
+class LinearFeedbackController {
 public:
-  ~FullStateEstimator() {}
-  explicit FullStateEstimator()
-    : StateEstimator() {}
+  virtual ~LinearFeedbackController() {}
 
-private:
-  // Register callbacks.
-  bool RegisterCallbacks(const ros::NodeHandle& n);
+  // Initialize this class by reading parameters and loading callbacks.
+  bool Initialize(const ros::NodeHandle& n);
 
-  // Merge a pose measured at the given time (specified by translation
-  // and euler angles) into the current state estimate.
-  void Update(const Vector3d& translation, const Vector3d& euler,
-              const ros::Time& stamp);
-}; //\class FullStateEstimator
+  // Compute control given the current state.
+  virtual VectorXd Control(const VectorXd& x) const;
+
+protected:
+  explicit LinearFeedbackController()
+    : initialized_(false) {}
+
+  // Load parameters and register callbacks. These may/must be overridden
+  // by derived classes.
+  virtual bool LoadParameters(const ros::NodeHandle& n);
+  virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
+
+  // K matrix and reference state/control (to fight gravity). These are
+  // hard-coded since they will not change.
+  MatrixXd K_;
+  VectorXd u_ref_;
+  VectorXd x_ref_;
+
+  std::string K_filename_;
+  std::string u_ref_filename_;
+  std::string x_ref_filename_;
+
+  // Dimensions of control and state spaces.
+  size_t x_dim_;
+  size_t u_dim_;
+
+  // Publishers and subscribers.
+  ros::Subscriber state_sub_;
+  ros::Subscriber reference_sub_;
+  ros::Publisher control_pub_;
+
+  std::string state_topic_;
+  std::string reference_topic_;
+  std::string control_topic_;
+
+  // Initialized flag and name.
+  bool initialized_;
+  std::string name_;
+}; //\class LinearFeedbackController
 
 #endif

@@ -36,21 +36,21 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The CrazyflieLQR node.
+// The DubinsStateEstimator node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ros/ros.h>
-#include <crazyflie_lqr/crazyflie_lqr.h>
+#include <crazyflie_state_estimator/dubins_state_estimator.h>
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "crazyflie_lqr");
+  ros::init(argc, argv, "dubins_state_estimator");
   ros::NodeHandle n("~");
 
-  CrazyflieLQR lqr;
+  DubinsStateEstimator state_estimator;
 
-  if (!lqr.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize empty package.",
+  if (!state_estimator.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize dubins_state_estimator.",
               ros::this_node::getName().c_str());
     return EXIT_FAILURE;
   }
