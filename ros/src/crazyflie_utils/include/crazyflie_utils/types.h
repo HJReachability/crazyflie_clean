@@ -45,6 +45,13 @@
 
 #include <Eigen/Dense>
 
+namespace crazyflie_utils {
+  namespace constants {
+    // Acceleration due to gravity.
+    static const double G = 9.81;
+  }
+}
+
 // ------------------------ THIRD PARTY TYPEDEFS ---------------------------- //
 
 typedef Eigen::Matrix<double, 3, 4> Matrix34d;

@@ -36,66 +36,68 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Linear feedback controller that reads in control/references from files.
-// Controllers for specific state spaces will be derived from this class.
+// Near hover simulator.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
-#define CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
+#ifndef CRAZYFLIE_SIMULATOR_NEAR_HOVER_SIMULATOR_H
+#define CRAZYFLIE_SIMULATOR_NEAR_HOVER_SIMULATOR_H
 
+#include <crazyflie_simulator/near_hover_dynamics.h>
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
 
 #include <ros/ros.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <math.h>
 #include <fstream>
 
-class LinearFeedbackController {
+namespace crazyflie_simulator {
+
+class NearHoverSimulator {
 public:
-  virtual ~LinearFeedbackController() {}
+  ~NearHoverSimulator() {}
 
   // Initialize this class by reading parameters and loading callbacks.
   bool Initialize(const ros::NodeHandle& n);
 
-  // Compute control given the current state.
-  virtual VectorXd Control(const VectorXd& x) const;
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-protected:
-  explicit LinearFeedbackController()
-    : initialized_(false) {}
+  // Timer callback.
+  void TimerCallback(const ros::TimerEvent& e);
 
-  // Load parameters and register callbacks. These may/must be overridden
-  // by derived classes.
-  virtual bool LoadParameters(const ros::NodeHandle& n);
-  virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
+  // Update control signal.
+  void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
 
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
+  // Current state and control.
+  VectorXd x_;
+  VectorXd u_;
+  NearHoverDynamics dynamics_;
 
-  std::string K_filename_;
-  std::string u_ref_filename_;
-  std::string x_ref_filename_;
+  // Timer.
+  ros::Timer timer_;
+  double dt_;
+  ros::Time last_time_;
 
-  // Dimensions of control and state spaces.
-  size_t x_dim_;
-  size_t u_dim_;
+  // TF broadcasting.
+  tf2_ros::TransformBroadcaster br_;
 
   // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
-
-  std::string state_topic_;
-  std::string reference_topic_;
+  ros::Subscriber control_sub_;
   std::string control_topic_;
+
+  // Frames of reference.
+  std::string fixed_frame_id_;
+  std::string robot_frame_id_;
 
   // Initialized flag and name.
   bool initialized_;
   std::string name_;
 }; //\class LinearFeedbackController
+
+} //\namespace crazyflie_simulator
 
 #endif

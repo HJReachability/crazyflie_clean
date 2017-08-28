@@ -36,66 +36,44 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Linear feedback controller that reads in control/references from files.
-// Controllers for specific state spaces will be derived from this class.
+// Near hover forward dynamics.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
-#define CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
+#ifndef CRAZYFLIE_SIMULATOR_NEAR_HOVER_DYNAMICS_H
+#define CRAZYFLIE_SIMULATOR_NEAR_HOVER_DYNAMICS_H
 
+#include <crazyflie_simulator/forward_dynamics.h>
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/ControlStamped.h>
 
 #include <ros/ros.h>
 #include <math.h>
 #include <fstream>
 
-class LinearFeedbackController {
+namespace crazyflie_simulator {
+
+class NearHoverDynamics : public ForwardDynamics {
 public:
-  virtual ~LinearFeedbackController() {}
+  ~NearHoverDynamics() {}
+  explicit NearHoverDynamics()
+    : ForwardDynamics() {}
 
-  // Initialize this class by reading parameters and loading callbacks.
-  bool Initialize(const ros::NodeHandle& n);
+  // Evaluate forward dynamics at a particular state.
+  inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
+    VectorXd xdot(7);
+    xdot[0] = x[3];
+    xdot[1] = x[4];
+    xdot[2] = x[5];
+    xdot[3] = u[3]*sin(u[1])*cos(x[6]) - u[3]*sin(u[0])*sin(x[6]);
+    xdot[4] = u[3]*sin(u[0])*cos(x[6]) + u[3]*sin(u[1])*sin(x[6]);
+    xdot[5] = u[3]*cos(u[0])*cos(u[1]) - crazyflie_utils::constants::G;
+    xdot[6] = u[2];
+    return xdot;
+  }
+}; //\class NearHoverDynamics
 
-  // Compute control given the current state.
-  virtual VectorXd Control(const VectorXd& x) const;
-
-protected:
-  explicit LinearFeedbackController()
-    : initialized_(false) {}
-
-  // Load parameters and register callbacks. These may/must be overridden
-  // by derived classes.
-  virtual bool LoadParameters(const ros::NodeHandle& n);
-  virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
-
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
-
-  std::string K_filename_;
-  std::string u_ref_filename_;
-  std::string x_ref_filename_;
-
-  // Dimensions of control and state spaces.
-  size_t x_dim_;
-  size_t u_dim_;
-
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
-
-  std::string state_topic_;
-  std::string reference_topic_;
-  std::string control_topic_;
-
-  // Initialized flag and name.
-  bool initialized_;
-  std::string name_;
-}; //\class LinearFeedbackController
+} //\namespace crazyflie_simulator
 
 #endif

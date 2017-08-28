@@ -41,8 +41,8 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_SIMULATOR_FORWARD_DYNAMCIS_H
-#define CRAZYFLIE_SIMULATOR_FORWARD_DYNAMCIS_H
+#ifndef CRAZYFLIE_SIMULATOR_FORWARD_DYNAMICS_H
+#define CRAZYFLIE_SIMULATOR_FORWARD_DYNAMICS_H
 
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
@@ -57,7 +57,7 @@ public:
   virtual ~ForwardDynamics() {}
 
   // Evaluate forward dynamics at a particular state.
-  virtual VectorXd operator()(const VectorXd& x) const = 0;
+  virtual VectorXd operator()(const VectorXd& x, const VectorXd& u) const = 0;
 
 protected:
   explicit ForwardDynamics() {}

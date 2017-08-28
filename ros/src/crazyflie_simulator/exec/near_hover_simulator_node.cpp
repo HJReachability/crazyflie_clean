@@ -1,17 +1,15 @@
-// The FullStateSimulator node.
+// The NearHoverSimulator node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ros/ros.h>
-#include <crazyflie_simulator/full_state_simulator.h>
-
-namespace crazyflie_simulator = cs;
+#include <crazyflie_simulator/near_hover_simulator.h>
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "full_state_simulator");
   ros::NodeHandle n("~");
 
-  cs::FullStateSimulator simulator;
+  crazyflie_simulator::NearHoverSimulator simulator;
 
   if (!simulator.Initialize(n)) {
     ROS_ERROR("%s: Failed to initialize full_state_simulator.",
