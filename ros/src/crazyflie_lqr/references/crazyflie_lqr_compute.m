@@ -49,18 +49,18 @@ function K = crazyflie_lqr_compute(Q,R,filename,col_separator,row_separator)
 	%	   filename:	name of text file to write output to
 	% col_separator:	string to use to separate columns in generated file
 	% row_separator:	string to use to separate rows in generated file
-	%
+
 	%% System dynamics
 	% (quadrotor in near hover, assuming small attitude angles)
+	%    dx/dt     =  vx_G
+	%    dy/dt     =  vy_G 	<-- _G stands for global frame (vs body)
+	%    dz/dt     =  vz_G
+	%    dvx_G/dt  =  T*sin(theta)*cos(psi) - T*sin(phi)*sin(psi)		~= 	g * theta
+	%    dvy_G/dt  =  T*sin(phi)*cos(psi)   + T*sin(theta)*sin(psi)		~= 	g * phi
+	%    dvz_G/dt  =  T*cos(phi)*cos(theta) - g 						~= 	T - g
+	%    dpsi/dt   =  w 
 	%
-	% dx/dt 	= 		vx_b * cos(psi) - vy_b * sin(psi)		~= 		vx_b
-	% dy/dt 	= 		vx_b * sin(psi) + vy_b * cos(psi)		~= 		vy_b
-	% dz/dt 	= 		vz_b 									 =		vz_b
-	% dvx_b/dt 	= 		T * sin(theta) 							~= 		g * theta
-	% dvy_b/dt  = 		T * sin(phi) 							~= 		g * phi
-	% dvz_b/dt  = 		T * cos(phi) * cos(theta) - g 			~= 		T - g
-	% dpsi/dt   = 		w 										 =		w
-	%
+	%    control: u = [ phi, theta, w, T]
 	%
 	% Linearized dynamics (around hover equilibrium point, NOT zero input)
 	%
@@ -68,7 +68,11 @@ function K = crazyflie_lqr_compute(Q,R,filename,col_separator,row_separator)
 	%
 	% with x = [x, y, z, vx_b, vy_b, vz_b, psi], u = [phi, theta, w, T - g].
 	% Order of controls as per crazyflie_server: [roll, pitch, yawrate, thrust].
-    % Note that the thrust command must be constructed as T = u(4) + g.
+	%
+	% Note 1: angle sign convention is based on positive accelerations on FLU frame
+	% (theta PITCH DOWN / phi ROLL LEFT / psi YAW left)
+	%
+    % Note 2: the total (nonlinear) thrust command must be constructed as T = u(4) + g.
 
 	g = 9.81;
 
@@ -110,7 +114,8 @@ function K = crazyflie_lqr_compute(Q,R,filename,col_separator,row_separator)
         R = diag(R);
     end
 
-	% Solve Algebraic Riccati Equation (MATLAB uses the Schur method on the Hamiltonian matrix)
+	% Solve Continuous-time Algebraic Riccati Equation (CARE)
+	% (MATLAB uses the Schur method on the Hamiltonian matrix)
 	[~,~,K] = care(A,B,Q,R);
     
     if nargin >= 3
