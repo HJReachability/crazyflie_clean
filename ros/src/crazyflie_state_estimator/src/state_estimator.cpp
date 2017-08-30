@@ -61,10 +61,16 @@ bool StateEstimator::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
+  // Initialize state vector to zero.
+  x_ = VectorXd::Zero(x_dim_);
+
   // Timer.
   ros::NodeHandle nl(n);
   timer_ = nl.createTimer(
     ros::Duration(dt_), &StateEstimator::TimerCallback, this);
+
+  // Sleep for a little while to let other nodes start up.
+  ros::Duration(0.5).sleep();
 
   initialized_ = true;
   return true;
@@ -101,7 +107,7 @@ void StateEstimator::TimerCallback(const ros::TimerEvent& e) {
 
   try {
     tf = tf_buffer_.lookupTransform(
-      fixed_frame_id_.c_str(), robot_frame_id_.c_str(), right_now);
+      fixed_frame_id_.c_str(), robot_frame_id_.c_str(), ros::Time(0));
   } catch(tf2::TransformException &ex) {
     ROS_WARN("%s: %s", name_.c_str(), ex.what());
     ROS_WARN("%s: Could not determine current state.", name_.c_str());

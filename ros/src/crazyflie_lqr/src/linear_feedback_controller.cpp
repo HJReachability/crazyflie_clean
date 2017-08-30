@@ -103,22 +103,22 @@ bool LinearFeedbackController::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Text files with K, x_ref, u_ref.
-  if (!nl.getParam("crazyflie_lqr/K_file", K_filename_)) return false;
-  if (!nl.getParam("crazyflie_lqr/u_ref_file", u_ref_filename_)) return false;
-  if (!nl.getParam("crazyflie_lqr/x_ref_file", x_ref_filename_)) return false;
+  if (!nl.getParam("K_file", K_filename_)) return false;
+  if (!nl.getParam("u_ref_file", u_ref_filename_)) return false;
+  if (!nl.getParam("x_ref_file", x_ref_filename_)) return false;
 
   // Dimensions.
   int dimension = 1;
-  if (!nl.getParam("crazyflie_lqr/x_dim", dimension)) return false;
+  if (!nl.getParam("x_dim", dimension)) return false;
   x_dim_ = static_cast<size_t>(dimension);
 
-  if (!nl.getParam("crazyflie_lqr/u_dim", dimension)) return false;
+  if (!nl.getParam("u_dim", dimension)) return false;
   u_dim_ = static_cast<size_t>(dimension);
 
   // Topics.
-  if (!nl.getParam("crazyflie_lqr/state_topic", state_topic_)) return false;
-  if (!nl.getParam("crazyflie_lqr/reference_topic", reference_topic_)) return false;
-  if (!nl.getParam("crazyflie_lqr/control_topic", control_topic_)) return false;
+  if (!nl.getParam("topics/state", state_topic_)) return false;
+  if (!nl.getParam("topics/reference", reference_topic_)) return false;
+  if (!nl.getParam("topics/control", control_topic_)) return false;
 
   return true;
 }

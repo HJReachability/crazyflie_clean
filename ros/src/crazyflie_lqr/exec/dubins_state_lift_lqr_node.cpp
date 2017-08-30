@@ -36,72 +36,26 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Derived from StateEstimator, for the 7D DubinsState message type.
+// The DubinsStateLqr node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_state_estimator/dubins_state_estimator.h>
+#include <ros/ros.h>
+#include <crazyflie_lqr/dubins_state_lift_lqr.h>
 
-// Register callbacks.
-bool DubinsStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "dubins_state_lift_lqr");
+  ros::NodeHandle n("~");
 
-  // State publisher.
-  state_pub_ = nl.advertise<crazyflie_msgs::DubinsStateStamped>(
-    state_topic_.c_str(), 10, false);
+  DubinsStateLiftLqr lqr;
 
-  return true;
-}
-
-// Merge a pose measured at the given time (specified by translation
-// and euler angles) into the current state estimate.
-void DubinsStateEstimator::Update(const Vector3d& translation,
-                                  const Vector3d& euler,
-                                  const ros::Time& stamp) {
-  // Catch first update.
-  if (first_update_) {
-    x_(0) = translation(0);
-    x_(1) = translation(1);
-    x_(2) = translation(2);
-
-    x_(3) = 0.0;
-    x_(4) = 0.0;
-    x_(5) = 0.0;
-
-    x_(6) = euler(2);
-
-    first_update_ = false;
-  } else {
-    // Time difference.
-    const double dt = (stamp - last_time_).toSec();
-
-    // TODO! Use a smoothing filter here instead.
-    // Update velocities.
-    x_(3) = (translation(0) - x_(0)) / dt;
-    x_(4) = (translation(1) - x_(1)) / dt;
-    x_(5) = (translation(2) - x_(2)) / dt;
-
-    // Update position/orientation.
-    x_(0) = translation(0);
-    x_(1) = translation(1);
-    x_(2) = translation(2);
-
-    x_(6) = euler(2);
+  if (!lqr.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize dubins_state_lift_lqr.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
   }
 
-  // Publish.
-  crazyflie_msgs::DubinsStateStamped msg;
+  ros::spin();
 
-  msg.header.frame_id = fixed_frame_id_;
-  msg.header.stamp = stamp;
-
-  msg.state.x = x_(0);
-  msg.state.y = x_(1);
-  msg.state.z = x_(2);
-  msg.state.x_dot = x_(3);
-  msg.state.y_dot = x_(4);
-  msg.state.z_dot = x_(5);
-  msg.state.yaw = x_(6);
-
-  state_pub_.publish(msg);
+  return EXIT_SUCCESS;
 }
