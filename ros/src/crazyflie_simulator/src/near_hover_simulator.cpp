@@ -71,18 +71,17 @@ bool NearHoverSimulator::Initialize(const ros::NodeHandle& n) {
 
 // Load parameters and register callbacks.
 bool NearHoverSimulator::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
+  ros::NodeHandle nl(n);
 
   // Frames of reference.
-  if (!ros::param::search("fixed_frame_id", key)) return false;
-  if (!ros::param::get(key, fixed_frame_id_)) return false;
+  if (!nl.getParam("frames/fixed", fixed_frame_id_))
+    return false;
 
-  if (!ros::param::search("robot_frame_id", key)) return false;
-  if (!ros::param::get(key, robot_frame_id_)) return false;
+  if (!nl.getParam("frames/robot", robot_frame_id_))
+    return false;
 
   // Time step for reading tf.
-  if (!ros::param::search("time_step", key)) return false;
-  if (!ros::param::get(key, dt_)) return false;
+  if (!nl.getParam("time_step", dt_)) return false;
 
   return true;
 }

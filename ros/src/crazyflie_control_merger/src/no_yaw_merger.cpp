@@ -73,13 +73,13 @@ bool NoYawMerger::LoadParameters(const ros::NodeHandle& n) {
   if (!ros::param::get(key, dt_)) return false;
 
   // Topics.
-  if (!ros::param::search("merger/control_topic", key)) return false;
+  if (!ros::param::search("merger/topics/control", key)) return false;
   if (!ros::param::get(key, control_topic_)) return false;
 
-  if (!ros::param::search("merger/prioritized_control_topic", key)) return false;
+  if (!ros::param::search("merger/topics/prioritized_control", key)) return false;
   if (!ros::param::get(key, no_yaw_control_topic_)) return false;
 
-  if (!ros::param::search("merger/merged_topic", key)) return false;
+  if (!ros::param::search("merger/topics/merged", key)) return false;
   if (!ros::param::get(key, merged_topic_)) return false;
 
   return true;

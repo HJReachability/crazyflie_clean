@@ -100,37 +100,25 @@ bool LinearFeedbackController::Initialize(const ros::NodeHandle& n) {
 
 // Load parameters. This may be overridden by derived classes.
 bool LinearFeedbackController::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
+  ros::NodeHandle nl(n);
 
   // Text files with K, x_ref, u_ref.
-  if (!ros::param::search("crazyflie_lqr/K_file", key)) return false;
-  if (!ros::param::get(key, K_filename_)) return false;
-
-  if (!ros::param::search("crazyflie_lqr/u_ref_file", key)) return false;
-  if (!ros::param::get(key, u_ref_filename_)) return false;
-
-  if (!ros::param::search("crazyflie_lqr/x_ref_file", key)) return false;
-  if (!ros::param::get(key, x_ref_filename_)) return false;
+  if (!nl.getParam("crazyflie_lqr/K_file", K_filename_)) return false;
+  if (!nl.getParam("crazyflie_lqr/u_ref_file", u_ref_filename_)) return false;
+  if (!nl.getParam("crazyflie_lqr/x_ref_file", x_ref_filename_)) return false;
 
   // Dimensions.
   int dimension = 1;
-  if (!ros::param::search("crazyflie_lqr/x_dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("crazyflie_lqr/x_dim", dimension)) return false;
   x_dim_ = static_cast<size_t>(dimension);
 
-  if (!ros::param::search("crazyflie_lqr/u_dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("crazyflie_lqr/u_dim", dimension)) return false;
   u_dim_ = static_cast<size_t>(dimension);
 
   // Topics.
-  if (!ros::param::search("crazyflie_lqr/state_topic", key)) return false;
-  if (!ros::param::get(key, state_topic_)) return false;
-
-  if (!ros::param::search("crazyflie_lqr/reference_topic", key)) return false;
-  if (!ros::param::get(key, reference_topic_)) return false;
-
-  if (!ros::param::search("crazyflie_lqr/control_topic", key)) return false;
-  if (!ros::param::get(key, control_topic_)) return false;
+  if (!nl.getParam("crazyflie_lqr/state_topic", state_topic_)) return false;
+  if (!nl.getParam("crazyflie_lqr/reference_topic", reference_topic_)) return false;
+  if (!nl.getParam("crazyflie_lqr/control_topic", control_topic_)) return false;
 
   return true;
 }

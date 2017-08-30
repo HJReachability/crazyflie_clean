@@ -72,28 +72,22 @@ bool StateEstimator::Initialize(const ros::NodeHandle& n) {
 
 // Load parameters.
 bool StateEstimator::LoadParameters(const ros::NodeHandle& n) {
-  std::string key;
+  ros::NodeHandle nl(n);
 
   // State dimension.
   int dimension = 1;
-  if (!ros::param::search("x_dim", key)) return false;
-  if (!ros::param::get(key, dimension)) return false;
+  if (!nl.getParam("x_dim", dimension)) return false;
   x_dim_ = static_cast<size_t>(dimension);
 
   // State topic.
-  if (!ros::param::search("state_topic", key)) return false;
-  if (!ros::param::get(key, state_topic_)) return false;
+  if (!nl.getParam("topics/state", state_topic_)) return false;
 
   // Frames of reference.
-  if (!ros::param::search("fixed_frame_id", key)) return false;
-  if (!ros::param::get(key, fixed_frame_id_)) return false;
-
-  if (!ros::param::search("robot_frame_id", key)) return false;
-  if (!ros::param::get(key, robot_frame_id_)) return false;
+  if (!nl.getParam("frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("frames/robot", robot_frame_id_)) return false;
 
   // Time step for reading tf.
-  if (!ros::param::search("time_step", key)) return false;
-  if (!ros::param::get(key, dt_)) return false;
+  if (!nl.getParam("time_step", dt_)) return false;
 
   return true;
 }
