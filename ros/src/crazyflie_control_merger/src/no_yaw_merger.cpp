@@ -109,7 +109,7 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
 void NoYawMerger::ControlCallback(
   const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
   control_ = msg->control;
-  been_updated_ = true;
+  //been_updated_ = true;
 }
 
 // Process an incoming state measurement.
@@ -118,7 +118,7 @@ void NoYawMerger::NoYawControlCallback(
   no_yaw_control_ = msg->control;
   ROS_INFO("%s: New opt ctl = (%f, %f, %f)", name_.c_str(),
            msg->control.roll, msg->control.pitch, msg->control.thrust);
-  //been_updated_ = true;
+  been_updated_ = true;
 }
 
 // Timer callback.
@@ -128,7 +128,7 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
 
   // Extract no yaw priority
   //  const double p = no_yaw_control_.priority;
-  const double p = 0.0;
+  const double p = 1.0;
 
   // Set message fields.
   crazyflie_msgs::ControlStamped msg;
@@ -139,10 +139,6 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
   msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
   msg.control.yaw_dot = 0.0; //control_.yaw_dot;
   msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
-#endif
-
-#if 0
-  msg.control = control_;
 #endif
 
   ROS_INFO("%s: Sending ctl = (%f, %f, %f)", name_.c_str(),

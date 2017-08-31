@@ -63,6 +63,18 @@ public:
   // Evaluate forward dynamics at a particular state.
   inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
     VectorXd x_dot(7);
+
+    // Approximate dynamics.
+    x_dot(0) = x(3);
+    x_dot(1) = x(4);
+    x_dot(2) = x(5);
+    x_dot(3) = crazyflie_utils::constants::G * std::tan(u(1));
+    x_dot(4) = -crazyflie_utils::constants::G * std::tan(u(0));
+    x_dot(5) = u(3) - crazyflie_utils::constants::G;
+    x_dot(6) = u(2);
+
+#if 0
+    // Actual dynamics.
     x_dot(0) = x(3);
     x_dot(1) = x(4);
     x_dot(2) = x(5);
@@ -70,6 +82,8 @@ public:
     x_dot(4) = u(3)*std::sin(u(0))*std::cos(x(6)) + u(3)*std::sin(u(1))*std::sin(x(6));
     x_dot(5) = u(3)*std::cos(u(0))*std::cos(u(1)) - crazyflie_utils::constants::G;
     x_dot(6) = u(2);
+#endif
+
     return x_dot;
   }
 }; //\class NearHoverDynamics

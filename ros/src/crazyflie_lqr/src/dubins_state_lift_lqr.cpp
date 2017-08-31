@@ -134,10 +134,11 @@ void DubinsStateLiftLqr::StateCallback(
   x_rel(6) = angles::WrapAngleRadians(x_rel(6));
 
   // Compute optimal control.
-  VectorXd u = -K_ * x_rel + u_ref_;
+  VectorXd u = K_ * x_rel + u_ref_;
   u(0) = angles::WrapAngleRadians(u(0));
   u(1) = angles::WrapAngleRadians(u(1));
 
+  // HACK! These thresholds should not be hard coded!
   u(0) = std::max(std::min(u(0), 0.2618), -0.2618);
   u(1) = std::max(std::min(u(1), 0.2618), -0.2618);
   u(3) = std::max(std::min(u(3), 16.0), 4.0);
