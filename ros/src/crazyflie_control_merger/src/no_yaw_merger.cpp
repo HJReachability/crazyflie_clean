@@ -98,6 +98,10 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
   merged_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     merged_topic_.c_str(), 10, false);
 
+  // Timer.
+  timer_ =
+    nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
+
   return true;
 }
 
@@ -127,10 +131,10 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
   crazyflie_msgs::ControlStamped msg;
   msg.header.stamp = ros::Time::now();
 
-  msg.control.roll = p * control_.roll + (1.0 - p) * no_yaw_control_.roll;
-  msg.control.pitch = p * control_.pitch + (1.0 - p) * no_yaw_control_.pitch;
+  msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
+  msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
   msg.control.yaw_dot = control_.yaw_dot;
-  msg.control.thrust = p * control_.thrust + (1.0 - p) * no_yaw_control_.thrust;
+  msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
 
   merged_pub_.publish(msg);
 }

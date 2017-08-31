@@ -82,7 +82,7 @@ bool NearHoverSimulator::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("time_step", dt_)) return false;
 
   // Control topic.
-  if (!nl.getParam("topics/control", dt_)) return false;
+  if (!nl.getParam("topics/control", control_topic_)) return false;
 
   // Get initial position.
   double init_x, init_y, init_z;
@@ -158,6 +158,7 @@ void NearHoverSimulator::ControlCallback(
   u_(1) = msg->control.pitch;
   u_(2) = msg->control.yaw_dot;
   u_(3) = msg->control.thrust;
+  std::cout << "sim: new ctl = " << u_.transpose() << std::endl;
 }
 
 } //\namespace crazyflie_simulator
