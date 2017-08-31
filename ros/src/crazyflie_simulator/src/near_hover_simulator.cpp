@@ -48,6 +48,11 @@ namespace crazyflie_simulator {
 bool NearHoverSimulator::Initialize(const ros::NodeHandle& n) {
   name_ = ros::names::append(n.getNamespace(), "near_hover_simulator");
 
+  // Set state and control to zero initially.
+  x_ = VectorXd::Zero(7);
+  u_ = VectorXd::Zero(4);
+  u_(3) = crazyflie_utils::constants::G;
+
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
     return false;
@@ -57,10 +62,6 @@ bool NearHoverSimulator::Initialize(const ros::NodeHandle& n) {
     ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
     return false;
   }
-
-  // Set state and control to zero initially.
-  x_ = VectorXd::Zero(7);
-  u_ = VectorXd::Zero(4);
 
   // Set initial time.
   last_time_ = ros::Time::now();
@@ -74,14 +75,24 @@ bool NearHoverSimulator::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Frames of reference.
-  if (!nl.getParam("frames/fixed", fixed_frame_id_))
-    return false;
-
-  if (!nl.getParam("frames/robot", robot_frame_id_))
-    return false;
+  if (!nl.getParam("frames/fixed", fixed_frame_id_)) return false;
+  if (!nl.getParam("frames/robot", robot_frame_id_)) return false;
 
   // Time step for reading tf.
   if (!nl.getParam("time_step", dt_)) return false;
+
+  // Control topic.
+  if (!nl.getParam("topics/control", dt_)) return false;
+
+  // Get initial position.
+  double init_x, init_y, init_z;
+  if (!nl.getParam("init/x", init_x)) return false;
+  if (!nl.getParam("init/y", init_y)) return false;
+  if (!nl.getParam("init/z", init_z)) return false;
+
+  x_(0) = init_x;
+  x_(1) = init_y;
+  x_(2) = init_z;
 
   return true;
 }
@@ -103,6 +114,9 @@ bool NearHoverSimulator::RegisterCallbacks(const ros::NodeHandle& n) {
 // Timer callback.
 void NearHoverSimulator::TimerCallback(const ros::TimerEvent& e) {
   const ros::Time now = ros::Time::now();
+
+  std::cout << "dynamics are: " << dynamics_(x_, u_).transpose() << std::endl;
+
   x_ += dynamics_(x_, u_) * (now - last_time_).toSec();
 
   // Update last time.
@@ -121,8 +135,8 @@ void NearHoverSimulator::TimerCallback(const ros::TimerEvent& e) {
   transform_stamped.transform.translation.z = x_(2);
 
   // RPY to quaternion.
-  const double roll = u_(1);
-  const double pitch = u_(0);
+  const double roll = u_(0);
+  const double pitch = u_(1);
   const double yaw = x_(6);
   const Quaterniond q =
     Eigen::AngleAxisd(roll, Vector3d::UnitX()) *

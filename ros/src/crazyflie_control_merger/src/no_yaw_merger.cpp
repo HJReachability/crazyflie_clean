@@ -59,6 +59,9 @@ bool NoYawMerger::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
+  // Delay a little while just to make sure other nodes are started up.
+  ros::Duration(2.0).sleep();
+
   been_updated_ = false;
   initialized_ = true;
   return true;
