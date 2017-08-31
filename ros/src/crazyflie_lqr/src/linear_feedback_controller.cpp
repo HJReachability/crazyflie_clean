@@ -43,20 +43,8 @@
 
 #include <crazyflie_lqr/linear_feedback_controller.h>
 
-// Load parameters.
-bool LinearFeedbackController::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "linear_feedback_controller");
-
-  if (!LoadParameters(n)) {
-    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
-    return false;
-  }
-
-  if (!RegisterCallbacks(n)) {
-    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
-    return false;
-  }
-
+// Load K, x_ref, u_ref from disk.
+bool LinearFeedbackController::LoadFromDisk() {
   // Set up file io to read K, x_ref, and u_ref from disk.
   K_ = MatrixXd::Zero(u_dim_, x_dim_);
   x_ref_ = VectorXd::Zero(x_dim_);
@@ -94,9 +82,12 @@ bool LinearFeedbackController::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
-  initialized_ = true;
+  std::cout << "K is: \n" << K_ << std::endl;
+  std::cout << "xref is: \n" << x_ref_.transpose() << std::endl;
+  std::cout << "uref is: \n" << u_ref_.transpose() << std::endl;
   return true;
 }
+
 
 // Load parameters. This may be overridden by derived classes.
 bool LinearFeedbackController::LoadParameters(const ros::NodeHandle& n) {

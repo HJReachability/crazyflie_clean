@@ -70,7 +70,7 @@ bool StateEstimator::Initialize(const ros::NodeHandle& n) {
     ros::Duration(dt_), &StateEstimator::TimerCallback, this);
 
   // Sleep for a little while to let other nodes start up.
-  ros::Duration(0.5).sleep();
+  ros::Duration(0.25).sleep();
 
   initialized_ = true;
   return true;

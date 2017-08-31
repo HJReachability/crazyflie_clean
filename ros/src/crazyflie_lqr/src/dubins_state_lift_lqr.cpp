@@ -45,6 +45,30 @@
 
 #include <crazyflie_lqr/dubins_state_lift_lqr.h>
 
+// Load parameters.
+bool DubinsStateLiftLqr::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "dubins_state_lift_lqr");
+
+  if (!LoadParameters(n)) {
+    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
+    return false;
+  }
+
+  if (!RegisterCallbacks(n)) {
+    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
+    return false;
+  }
+
+  // Load K, x_ref, u_ref from disk.
+  if (!LoadFromDisk()) {
+    ROS_ERROR("%s: Failed to load K, x_ref, u_ref from disk.", name_.c_str());
+    return false;
+  }
+
+  initialized_ = true;
+  return true;
+}
+
 // Register callbacks.
 bool DubinsStateLiftLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
@@ -73,6 +97,8 @@ void DubinsStateLiftLqr::ReferenceCallback(
   x_ref_(4) = msg->state.y_dot;
   x_ref_(5) = msg->state.z_dot;
   x_ref_(6) = 0.0;
+
+  std::cout << "Dubins: updated x_ref_ = " << x_ref_.transpose() << std::endl;
 }
 
 // Process an incoming state measurement.
@@ -108,9 +134,13 @@ void DubinsStateLiftLqr::StateCallback(
   x_rel(6) = angles::WrapAngleRadians(x_rel(6));
 
   // Compute optimal control.
-  VectorXd u = K_ * x_rel + u_ref_;
+  VectorXd u = -K_ * x_rel + u_ref_;
   u(0) = angles::WrapAngleRadians(u(0));
   u(1) = angles::WrapAngleRadians(u(1));
+
+  u(0) = std::max(std::min(u(0), 0.2618), -0.2618);
+  u(1) = std::max(std::min(u(1), 0.2618), -0.2618);
+  u(3) = std::max(std::min(u(3), 16.0), 4.0);
 
   // Publish.
   crazyflie_msgs::ControlStamped control_msg;

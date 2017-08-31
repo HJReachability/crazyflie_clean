@@ -57,6 +57,9 @@ namespace crazyflie_simulator {
 class NearHoverSimulator {
 public:
   ~NearHoverSimulator() {}
+  NearHoverSimulator()
+    : received_control_(false),
+      initialized_(false) {}
 
   // Initialize this class by reading parameters and loading callbacks.
   bool Initialize(const ros::NodeHandle& n);
@@ -77,6 +80,9 @@ private:
   VectorXd u_;
   NearHoverDynamics dynamics_;
 
+  // Flag for whether first control signal has been received.
+  bool received_control_;
+
   // Timer.
   ros::Timer timer_;
   double dt_;
@@ -96,7 +102,7 @@ private:
   // Initialized flag and name.
   bool initialized_;
   std::string name_;
-}; //\class LinearFeedbackController
+}; //\class NearHoverSimulator
 
 } //\namespace crazyflie_simulator
 

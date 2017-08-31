@@ -61,7 +61,8 @@ class NoYawMerger {
 public:
   ~NoYawMerger() {}
   explicit NoYawMerger()
-    : initialized_(false) {}
+    : been_updated_(false),
+      initialized_(false) {}
 
   // Initialize this class.
   bool Initialize(const ros::NodeHandle& n);

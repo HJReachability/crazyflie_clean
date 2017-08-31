@@ -60,6 +60,8 @@ public:
   explicit DubinsStateLqr()
     : LinearFeedbackController() {}
 
+  bool Initialize(const ros::NodeHandle& n);
+
 private:
   // Register callbacks.
   bool RegisterCallbacks(const ros::NodeHandle& n);

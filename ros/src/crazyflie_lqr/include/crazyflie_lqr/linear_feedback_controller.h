@@ -56,7 +56,7 @@ public:
   virtual ~LinearFeedbackController() {}
 
   // Initialize this class by reading parameters and loading callbacks.
-  bool Initialize(const ros::NodeHandle& n);
+  virtual bool Initialize(const ros::NodeHandle& n) = 0;
 
   // Compute control given the current state.
   virtual VectorXd Control(const VectorXd& x) const;
@@ -69,6 +69,9 @@ protected:
   // by derived classes.
   virtual bool LoadParameters(const ros::NodeHandle& n);
   virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
+
+  // Load K, x_ref, u_ref from disk.
+  bool LoadFromDisk();
 
   // K matrix and reference state/control (to fight gravity). These are
   // hard-coded since they will not change.

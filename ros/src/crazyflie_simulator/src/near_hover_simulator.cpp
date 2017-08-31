@@ -115,9 +115,9 @@ bool NearHoverSimulator::RegisterCallbacks(const ros::NodeHandle& n) {
 void NearHoverSimulator::TimerCallback(const ros::TimerEvent& e) {
   const ros::Time now = ros::Time::now();
 
-  std::cout << "dynamics are: " << dynamics_(x_, u_).transpose() << std::endl;
-
-  x_ += dynamics_(x_, u_) * (now - last_time_).toSec();
+  // Only update state if we have received a control signal from outside.
+  if (received_control_)
+    x_ += dynamics_(x_, u_) * (now - last_time_).toSec();
 
   // Update last time.
   last_time_ = now;
@@ -141,7 +141,7 @@ void NearHoverSimulator::TimerCallback(const ros::TimerEvent& e) {
   const Quaterniond q =
     Eigen::AngleAxisd(roll, Vector3d::UnitX()) *
     Eigen::AngleAxisd(pitch, Vector3d::UnitY()) *
-    Eigen::AngleAxisd(yaw, Vector3d::UnitX());
+    Eigen::AngleAxisd(yaw, Vector3d::UnitZ());
 
   transform_stamped.transform.rotation.x = q.x();
   transform_stamped.transform.rotation.y = q.y();
@@ -158,7 +158,8 @@ void NearHoverSimulator::ControlCallback(
   u_(1) = msg->control.pitch;
   u_(2) = msg->control.yaw_dot;
   u_(3) = msg->control.thrust;
-  std::cout << "sim: new ctl = " << u_.transpose() << std::endl;
+
+  received_control_ = true;
 }
 
 } //\namespace crazyflie_simulator
