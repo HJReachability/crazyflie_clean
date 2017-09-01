@@ -52,13 +52,13 @@ function K = crazyflie_lqr_compute(Q,R,filename,col_separator,row_separator)
 
 	%% System dynamics
 	% (quadrotor in near hover, assuming small attitude angles)
-	%    dx/dt     =  vx_G
-	%    dy/dt     =  vy_G 	<-- _G stands for global frame (vs body)
-	%    dz/dt     =  vz_G
-	%    dvx_G/dt  =  T*sin(theta)*cos(psi) - T*sin(phi)*sin(psi)		~= 	g * theta
-	%    dvy_G/dt  =  T*sin(phi)*cos(psi)   + T*sin(theta)*sin(psi)		~= 	g * phi
-	%    dvz_G/dt  =  T*cos(phi)*cos(theta) - g 						~= 	T - g
-	%    dpsi/dt   =  w 
+	%    dx/dt     =    vx_G
+	%    dy/dt     =    vy_G 	<-- _G stands for global frame (vs body)
+	%    dz/dt     =    vz_G
+	%    dvx_G/dt  =    T*sin(theta)*cos(psi) + T*sin(phi)*sin(psi)      ~=    g * theta
+	%    dvy_G/dt  =  - T*sin(phi)*cos(psi)   + T*sin(theta)*sin(psi)	 ~=  - g * phi
+	%    dvz_G/dt  =    T*cos(phi)*cos(theta) - g                        ~=    T - g
+	%    dpsi/dt   =    w 
 	%
 	%    control: u = [ phi, theta, w, T]
 	%
@@ -69,8 +69,8 @@ function K = crazyflie_lqr_compute(Q,R,filename,col_separator,row_separator)
 	% with x = [x, y, z, vx_b, vy_b, vz_b, psi], u = [phi, theta, w, T - g].
 	% Order of controls as per crazyflie_server: [roll, pitch, yawrate, thrust].
 	%
-	% Note 1: angle sign convention is based on positive accelerations on FLU frame
-	% (theta PITCH DOWN / phi ROLL LEFT / psi YAW left)
+	% Note 1: angle sign convention is based on positive (right-hand) angles on FLU frame
+	% (phi ROLL RIGHT / theta PITCH DOWN / psi YAW left)
 	%
     % Note 2: the total (nonlinear) thrust command must be constructed as T = u(4) + g.
 
@@ -89,8 +89,8 @@ function K = crazyflie_lqr_compute(Q,R,filename,col_separator,row_separator)
 	B = [	0	0	0	0;		% x
 			0	0	0	0;		% y
 			0	0	0	0;		% z
-			0	g 	0	0;		% vx_b
-			g 	0	0	0;		% vy_b
+			0   g 	0	0;		% vx_b
+           -g 	0	0	0;		% vy_b
 			0 	0 	0	1;		% vz_b
 			0	0	1	0];		% psi
 
@@ -100,14 +100,14 @@ function K = crazyflie_lqr_compute(Q,R,filename,col_separator,row_separator)
 	% J = |		( x(t)' * Q * x(t)  +  u(t)' * R * u(t) ) dt
 	%     /0
 
-	if nargin < 1
+    if nargin < 1
 	    %			x	y 	z 		vx 	vy  vz 		psi
 	    Q = diag([	1	1	2		1	1	2		10	].^2);
     elseif min(size(Q))<2
         Q = diag(Q);
     end
 
-	if nargin < 2
+    if nargin < 2
 	    %			ph  	th  	w   	T
 	    R = diag([	0.1 	0.1 	0.1 	0.1	].^2);
 	elseif min(size(R))<2
@@ -116,7 +116,8 @@ function K = crazyflie_lqr_compute(Q,R,filename,col_separator,row_separator)
 
 	% Solve Continuous-time Algebraic Riccati Equation (CARE)
 	% (MATLAB uses the Schur method on the Hamiltonian matrix)
-	[~,~,K] = care(A,B,Q,R);
+	[~,~,K] = care(A,B,Q,R);    % SIGN: this function uses the convention u = -K*x
+    K = -K;                     % SIGN: switch to convention u = K*x by flipping sign of K
     
     if nargin >= 3
     	if nargin < 4
