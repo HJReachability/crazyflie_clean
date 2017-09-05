@@ -97,8 +97,6 @@ void DubinsStateLiftLqr::ReferenceCallback(
   x_ref_(4) = msg->state.y_dot;
   x_ref_(5) = msg->state.z_dot;
   x_ref_(6) = 0.0;
-
-  std::cout << "Dubins: updated x_ref_ = " << x_ref_.transpose() << std::endl;
 }
 
 // Process an incoming state measurement.
