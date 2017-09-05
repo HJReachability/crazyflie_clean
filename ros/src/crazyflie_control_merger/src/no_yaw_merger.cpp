@@ -116,8 +116,6 @@ void NoYawMerger::ControlCallback(
 void NoYawMerger::NoYawControlCallback(
   const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg) {
   no_yaw_control_ = msg->control;
-  ROS_INFO("%s: New opt ctl = (%f, %f, %f)", name_.c_str(),
-           msg->control.roll, msg->control.pitch, msg->control.thrust);
   been_updated_ = true;
 }
 
@@ -140,9 +138,6 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
   msg.control.yaw_dot = 0.0; //control_.yaw_dot;
   msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
 #endif
-
-  ROS_INFO("%s: Sending ctl = (%f, %f, %f)", name_.c_str(),
-           msg.control.roll, msg.control.pitch, msg.control.thrust);
 
   merged_pub_.publish(msg);
 }

@@ -144,6 +144,7 @@ void NearHoverSimulator::TimerCallback(const ros::TimerEvent& e) {
     Eigen::AngleAxisd(pitch, Vector3d::UnitY()) *
     Eigen::AngleAxisd(yaw, Vector3d::UnitZ());
 
+  /**
   Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
   euler(0) = angles::WrapAngleRadians(euler(0));
   euler(1) = angles::WrapAngleRadians(euler(1));
@@ -152,6 +153,7 @@ void NearHoverSimulator::TimerCallback(const ros::TimerEvent& e) {
   std::cout << "roll = " << u_(0) << ", q roll = " << euler(0) << std::endl;
   std::cout << "pitch = " << u_(1) << ", q pitch = " << euler(1) << std::endl;
   std::cout << "yaw = " << u_(2) << ", q yaw = " << euler(2) << std::endl;
+  **/
 
   transform_stamped.transform.rotation.x = q.x();
   transform_stamped.transform.rotation.y = q.y();

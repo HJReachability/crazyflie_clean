@@ -14,13 +14,6 @@ find_package(catkin REQUIRED COMPONENTS
 file(GLOB msg_files RELATIVE ${PROJECT_SOURCE_DIR}/msg ${PROJECT_SOURCE_DIR}/msg/*.msg)
 add_message_files(DIRECTORY msg FILES ${msg_files})
 
-add_message_files(
-  DIRECTORY
-  msg
-  FILES
-  ${msg_files}
-)
-
 generate_messages(
   DEPENDENCIES
   std_msgs
