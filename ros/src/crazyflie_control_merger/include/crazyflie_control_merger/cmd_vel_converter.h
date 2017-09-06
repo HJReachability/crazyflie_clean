@@ -36,7 +36,9 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class to convert ControlStamped messages to Twists and publish on /cmd_vel.
+// Class to convert ControlStamped messages to Twists and publish on cmd_vel.
+// Provides services "takeoff" and "land" that determine whether cmd_vel gets
+// 0 or the actual control signal requested.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -50,6 +52,7 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
+#include <std_srvs/Empty.h>
 #include <math.h>
 #include <fstream>
 
@@ -72,12 +75,27 @@ private:
   // Process an incoming reference point.
   void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
 
+  // Takeoff service. Set in_flight_ flag to true.
+  bool TakeoffService(std_srvs::Empty::Request& req,
+                      std_srvs::Empty::Response& res);
+
+  // Landing service. Set in_flight_ flag to false.
+  bool LandService(std_srvs::Empty::Request& req,
+                   std_srvs::Empty::Response& res);
+
   // Publishers, subscribers, and topics.
   ros::Publisher cmd_vel_pub_;
   ros::Subscriber control_sub_;
 
   std::string cmd_vel_topic_;
   std::string control_topic_;
+
+  // Takeoff and landing services.
+  ros::ServiceServer takeoff_srv_;
+  ros::ServiceServer land_srv_;
+
+  // Flag for whether takeoff has been called (and land has not).
+  bool in_flight_;
 
   // Naming and initialization.
   bool initialized_;

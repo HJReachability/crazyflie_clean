@@ -14,6 +14,7 @@ find_package(Eigen3 REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  std_srvs
   visualization_msgs
   geometry_msgs
   crazyflie_msgs
@@ -27,6 +28,7 @@ catkin_package(
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
     roscpp
+    std_srvs
     visualization_msgs
     geometry_msgs
     crazyflie_msgs

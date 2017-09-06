@@ -71,7 +71,7 @@ public:
         , m_startZ(0)
     {
         ros::NodeHandle nh;
-        m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(10.0)); 
+        m_listener.waitForTransform(m_worldFrame, m_frame, ros::Time(0), ros::Duration(10.0));
         m_pubNav = nh.advertise<geometry_msgs::Twist>("cmd_vel", 1);
         m_subscribeGoal = nh.subscribe("goal", 1, &Controller::goalChanged, this);
         m_serviceTakeoff = nh.advertiseService("takeoff", &Controller::takeoff, this);
@@ -252,7 +252,6 @@ int main(int argc, char **argv)
   n.getParam("frame", frame);
   double frequency;
   n.param("frequency", frequency, 50.0);
-
   Controller controller(worldFrame, frame, n);
   controller.run(frequency);
 
