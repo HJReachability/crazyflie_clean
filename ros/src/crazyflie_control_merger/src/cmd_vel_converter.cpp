@@ -36,26 +36,73 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The NoYawMerger node.
+// Class to convert ControlStamped messages to Twists and publish on /cmd_vel.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <ros/ros.h>
-#include <crazyflie_control_merger/no_yaw_merger.h>
+#include <crazyflie_control_merger/cmd_vel_converter.h>
 
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "no_yaw_merger");
-  ros::NodeHandle n("~");
+namespace crazyflie_control_merger {
 
-  crazyflie_control_merger::NoYawMerger merger;
+// Initialize this node.
+bool CmdVelConverter::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "cmd_vel_converter");
 
-  if (!merger.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize no_yaw_merger.",
-              ros::this_node::getName().c_str());
-    return EXIT_FAILURE;
+  if (!LoadParameters(n)) {
+    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
+    return false;
   }
 
-  ros::spin();
+  if (!RegisterCallbacks(n)) {
+    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
+    return false;
+  }
 
-  return EXIT_SUCCESS;
+  // Delay a little while just to make sure other nodes are started up.
+  //  ros::Duration(0.5).sleep();
+
+  initialized_ = true;
+  return true;
 }
+
+// Load parameters.
+bool CmdVelConverter::LoadParameters(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
+
+  // Topics.
+  if (!nl.getParam("topics/control", control_topic_)) return false;
+
+  return true;
+}
+
+// Register callbacks.
+bool CmdVelConverter::RegisterCallbacks(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
+
+  // Subscribers.
+  control_sub_ = nl.subscribe(
+    control_topic_.c_str(), 10, &CmdVelConverter::ControlCallback, this);
+
+  // Publisher.
+  cmd_vel_pub_ = nl.advertise<geometry_msgs::Twist>(
+    cmd_vel_topic_.c_str(), 10, false);
+
+  return true;
+}
+
+// Process an incoming reference point.
+void CmdVelConverter::
+ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
+  geometry_msgs::Twist twist;
+
+  // Fill in the Twist, following the conversion process in the
+  // crazyflie_server.cpp file function named "cmdVelChanged()".
+  twist.linear.y = msg->control.roll;
+  twist.linear.x = -msg->control.pitch;
+  twist.angular.z = msg->control.yaw_dot;
+  twist.linear.z = crazyflie_utils::pwm::ThrustToPwmDouble(msg->control.thrust);
+
+  cmd_vel_pub_.publish(twist);
+}
+
+} //\namespace crazyflie_control_merger

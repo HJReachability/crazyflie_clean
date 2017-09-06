@@ -36,21 +36,21 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The NoYawMerger node.
+// The CmdVelConverter node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ros/ros.h>
-#include <crazyflie_control_merger/no_yaw_merger.h>
+#include <crazyflie_control_merger/cmd_vel_converter.h>
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "no_yaw_merger");
+  ros::init(argc, argv, "cmd_vel_converter");
   ros::NodeHandle n("~");
 
-  crazyflie_control_merger::NoYawMerger merger;
+  crazyflie_control_merger::CmdVelConverter converter;
 
-  if (!merger.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize no_yaw_merger.",
+  if (!converter.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize cmd_vel_converter.",
               ros::this_node::getName().c_str());
     return EXIT_FAILURE;
   }

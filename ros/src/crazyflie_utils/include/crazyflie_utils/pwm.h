@@ -40,24 +40,30 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_UTILS_ANGLES_H
-#define CRAZYFLIE_UTILS_ANGLES_H
+#ifndef CRAZYFLIE_UTILS_PWM_H
+#define CRAZYFLIE_UTILS_PWM_H
 
 #include <crazyflie_utils/types.h>
 
 #include <limits>
 #include <ros/ros.h>
 
+namespace crazyflie_utils {
 namespace pwm {
+  // Convert the given thrust to a PWM signal (still double).
+  static inline double ThrustToPwmDouble(double thrust) {
+    const double k_thrust = constants::G / 40000.0;
+    return thrust * 40000.0 / constants::G;
+  }
+
   // Get the PWM signal (uint16) to generate the given thrust.
-  static inline uint16_t (double thrust) {
-    const double k_thrust = 9.81 / 40000.0;
-    const double control = thrust / k_thrust;
+  static inline uint16_t ThrustToPwmUnsignedShort(double thrust) {
+    const double control = ThrustToPwmDouble(thrust);
 
 #ifdef ENABLE_DEBUG_MESSAGES
     if (control > static_cast<double>(std::numeric_limits<uint16_t>::max())) {
       ROS_WARN("Desired thrust is too high. Sending max PWM signal instead.");
-      control = std::numeric_limits<uint16_t>::max();
+      return  std::numeric_limits<uint16_t>::max();
     }
 #endif
 
@@ -65,5 +71,6 @@ namespace pwm {
   }
 
 } //\namespace pwm
+} //\namespace crazyflie_utils
 
 #endif

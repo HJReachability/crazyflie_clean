@@ -45,6 +45,7 @@
 
 #include <crazyflie_utils/types.h>
 
+namespace crazyflie_utils {
 namespace angles {
   // Convert degrees to radians.
   static inline double DegreesToRadians(double d) {
@@ -75,6 +76,8 @@ namespace angles {
 
     return r;
   }
+
 } //\namespace angles
+} //\namespace crazyflie_utils
 
 #endif

@@ -127,12 +127,12 @@ void DubinsStateLqr::StateCallback(
   x_rel(4) = rot_y_dot;
 
   // Wrap angles.
-  x_rel(6) = angles::WrapAngleRadians(x_rel(6));
+  x_rel(6) = crazyflie_utils::angles::WrapAngleRadians(x_rel(6));
 
   // Compute optimal control.
   VectorXd u = K_ * x_rel + u_ref_;
-  u(0) = angles::WrapAngleRadians(u(0));
-  u(1) = angles::WrapAngleRadians(u(1));
+  u(0) = crazyflie_utils::angles::WrapAngleRadians(u(0));
+  u(1) = crazyflie_utils::angles::WrapAngleRadians(u(1));
 
   // Publish.
   crazyflie_msgs::ControlStamped control_msg;

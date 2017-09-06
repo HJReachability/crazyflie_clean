@@ -36,26 +36,55 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The NoYawMerger node.
+// Class to convert ControlStamped messages to Twists and publish on /cmd_vel.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef CRAZYFLIE_CONTROL_MERGER_CMD_VEL_CONVERTER_H
+#define CRAZYFLIE_CONTROL_MERGER_CMD_VEL_CONVERTER_H
+
+#include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
+#include <crazyflie_utils/pwm.h>
+#include <crazyflie_msgs/ControlStamped.h>
+
 #include <ros/ros.h>
-#include <crazyflie_control_merger/no_yaw_merger.h>
+#include <geometry_msgs/Twist.h>
+#include <math.h>
+#include <fstream>
 
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "no_yaw_merger");
-  ros::NodeHandle n("~");
+namespace crazyflie_control_merger {
 
-  crazyflie_control_merger::NoYawMerger merger;
+class CmdVelConverter {
+public:
+  ~CmdVelConverter() {}
+  explicit CmdVelConverter()
+    : cmd_vel_topic_("/cmd_vel"),
+      initialized_(false) {}
 
-  if (!merger.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize no_yaw_merger.",
-              ros::this_node::getName().c_str());
-    return EXIT_FAILURE;
-  }
+  // Initialize this class.
+  bool Initialize(const ros::NodeHandle& n);
 
-  ros::spin();
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  return EXIT_SUCCESS;
-}
+  // Process an incoming reference point.
+  void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
+
+  // Publishers, subscribers, and topics.
+  ros::Publisher cmd_vel_pub_;
+  ros::Subscriber control_sub_;
+
+  const std::string cmd_vel_topic_;
+  std::string control_topic_;
+
+  // Naming and initialization.
+  bool initialized_;
+  std::string name_;
+}; //\class NoYawMerger
+
+} //\crazyflie_control_merger
+
+#endif

@@ -129,12 +129,12 @@ void DubinsStateLiftLqr::StateCallback(
   x_rel(4) = rot_y_dot;
 
   // Wrap angles.
-  x_rel(6) = angles::WrapAngleRadians(x_rel(6));
+  x_rel(6) = crazyflie_utils::angles::WrapAngleRadians(x_rel(6));
 
   // Compute optimal control.
   VectorXd u = K_ * x_rel + u_ref_;
-  u(0) = angles::WrapAngleRadians(u(0));
-  u(1) = angles::WrapAngleRadians(u(1));
+  u(0) = crazyflie_utils::angles::WrapAngleRadians(u(0));
+  u(1) = crazyflie_utils::angles::WrapAngleRadians(u(1));
 
   // HACK! These thresholds should not be hard coded!
   u(0) = std::max(std::min(u(0), 0.2618), -0.2618);

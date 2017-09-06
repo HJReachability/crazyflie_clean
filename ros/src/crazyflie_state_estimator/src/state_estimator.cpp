@@ -125,9 +125,9 @@ void StateEstimator::TimerCallback(const ros::TimerEvent& e) {
                          tf.transform.rotation.y,
                          tf.transform.rotation.z);
   Vector3d euler = quat.toRotationMatrix().eulerAngles(0, 1, 2);
-  euler(0) = angles::WrapAngleRadians(euler(0));
-  euler(1) = angles::WrapAngleRadians(euler(1));
-  euler(2) = angles::WrapAngleRadians(euler(2));
+  euler(0) = crazyflie_utils::angles::WrapAngleRadians(euler(0));
+  euler(1) = crazyflie_utils::angles::WrapAngleRadians(euler(1));
+  euler(2) = crazyflie_utils::angles::WrapAngleRadians(euler(2));
 
   // Update state.
   Update(translation, euler, right_now);
