@@ -59,8 +59,7 @@ class CmdVelConverter {
 public:
   ~CmdVelConverter() {}
   explicit CmdVelConverter()
-    : cmd_vel_topic_("/cmd_vel"),
-      initialized_(false) {}
+    : initialized_(false) {}
 
   // Initialize this class.
   bool Initialize(const ros::NodeHandle& n);
@@ -77,7 +76,7 @@ private:
   ros::Publisher cmd_vel_pub_;
   ros::Subscriber control_sub_;
 
-  const std::string cmd_vel_topic_;
+  std::string cmd_vel_topic_;
   std::string control_topic_;
 
   // Naming and initialization.

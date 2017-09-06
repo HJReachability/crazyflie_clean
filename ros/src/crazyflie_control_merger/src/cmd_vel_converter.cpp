@@ -71,6 +71,7 @@ bool CmdVelConverter::LoadParameters(const ros::NodeHandle& n) {
 
   // Topics.
   if (!nl.getParam("topics/control", control_topic_)) return false;
+  if (!nl.getParam("topics/cmd_vel", cmd_vel_topic_)) return false;
 
   return true;
 }

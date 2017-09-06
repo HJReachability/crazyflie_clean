@@ -87,8 +87,8 @@ if __name__ == '__main__':
             msg4.header.seq = seq
             msg4.header.stamp = rospy.Time.now()
             pub.publish(msg4)
-        if rospy.get_time()-lasttime>5:
-            flag=(flag+1)%4
-            lasttime=rospy.get_time()
+        #if rospy.get_time()-lasttime>5:
+        #    flag=(flag+1)%4
+        #    lasttime=rospy.get_time()
         rate.sleep()
 
