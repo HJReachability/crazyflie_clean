@@ -77,6 +77,17 @@ namespace angles {
     return r;
   }
 
+  // Convert rotation matrix to roll-pitch-yaw Euler angles with
+  // aerospace convention: 
+  static inline Eigen::Vector3d Matrix2RPY(Eigen::Matrix3d& R){
+    const double roll  = std::atan2(-R(1,2), R(2,2));
+    const double pitch = std::asin (R(0,2));
+    const double yaw   = std::atan2(-R(0,1), R(0,0));
+    Eigen::Vector3d euler;
+    euler << roll, pitch, yaw;
+    return euler;
+  }
+
 } //\namespace angles
 } //\namespace crazyflie_utils
 

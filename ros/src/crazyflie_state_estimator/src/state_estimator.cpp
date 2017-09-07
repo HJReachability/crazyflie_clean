@@ -124,7 +124,10 @@ void StateEstimator::TimerCallback(const ros::TimerEvent& e) {
                          tf.transform.rotation.x,
                          tf.transform.rotation.y,
                          tf.transform.rotation.z);
-  Vector3d euler = quat.toRotationMatrix().eulerAngles(0, 1, 2);
+  // Multiply by sign of x component to ensure quaternion giving the preferred
+  // Euler transformation (here we're exploiting the fact that rot(q)=rot(-q) ).
+  Eigen::Matrix3d R = quat.toRotationMatrix();
+  Vector3d euler = crazyflie_utils::angles::Matrix2RPY(R);
   euler(0) = crazyflie_utils::angles::WrapAngleRadians(euler(0));
   euler(1) = crazyflie_utils::angles::WrapAngleRadians(euler(1));
   euler(2) = crazyflie_utils::angles::WrapAngleRadians(euler(2));
