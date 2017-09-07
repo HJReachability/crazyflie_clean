@@ -62,7 +62,6 @@ bool NoYawMerger::Initialize(const ros::NodeHandle& n) {
   // Delay a little while just to make sure other nodes are started up.
   //  ros::Duration(0.5).sleep();
 
-  been_updated_ = false;
   initialized_ = true;
   return true;
 }
@@ -109,35 +108,33 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
 void NoYawMerger::ControlCallback(
   const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
   control_ = msg->control;
-  //been_updated_ = true;
+  control_been_updated_ = true;
 }
 
 // Process an incoming state measurement.
 void NoYawMerger::NoYawControlCallback(
   const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg) {
   no_yaw_control_ = msg->control;
-  been_updated_ = true;
+  no_yaw_control_been_updated_ = true;
 }
 
 // Timer callback.
 void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
-  if (!been_updated_)
+  if (!control_been_updated_ || !no_yaw_control_been_updated_)
     return;
 
   // Extract no yaw priority
-  //  const double p = no_yaw_control_.priority;
-  const double p = 1.0;
+  const double p = no_yaw_control_.priority;
+  //const double p = 1.0;
 
   // Set message fields.
   crazyflie_msgs::ControlStamped msg;
   msg.header.stamp = ros::Time::now();
 
-#if 1
   msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
   msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
   msg.control.yaw_dot = 0.0; //control_.yaw_dot;
   msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
-#endif
 
   merged_pub_.publish(msg);
 }

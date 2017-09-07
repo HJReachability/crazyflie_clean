@@ -61,7 +61,8 @@ class NoYawMerger {
 public:
   ~NoYawMerger() {}
   explicit NoYawMerger()
-    : been_updated_(false),
+    : control_been_updated_(false),
+      no_yaw_control_been_updated_(false),
       initialized_(false) {}
 
   // Initialize this class.
@@ -87,7 +88,8 @@ private:
   crazyflie_msgs::NoYawControl no_yaw_control_;
 
   // Flag for whether control or no yaw control has been updated.
-  bool been_updated_;
+  bool control_been_updated_;
+  bool no_yaw_control_been_updated_;
 
   // Timer.
   ros::Timer timer_;
