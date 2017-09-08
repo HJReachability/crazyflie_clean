@@ -84,54 +84,25 @@ bool CmdVelConverter::RegisterCallbacks(const ros::NodeHandle& n) {
   control_sub_ = nl.subscribe(
     control_topic_.c_str(), 10, &CmdVelConverter::ControlCallback, this);
 
-  // Publisher.
+  // Publishers.
   cmd_vel_pub_ = nl.advertise<geometry_msgs::Twist>(
     cmd_vel_topic_.c_str(), 10, false);
 
-  // Services.
-  takeoff_srv_ = nl.advertiseService(
-   "/takeoff", &CmdVelConverter::TakeoffService, this);
-
-  land_srv_ = nl.advertiseService(
-   "/land", &CmdVelConverter::LandService, this);
-
   return true;
 }
-
 // Process an incoming reference point.
 void CmdVelConverter::
 ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
   geometry_msgs::Twist twist;
 
-  if (in_flight_) {
-    // Fill in the Twist, following the conversion process in the
-    // crazyflie_server.cpp file function named "cmdVelChanged()".
-    twist.linear.y = msg->control.roll;
-    twist.linear.x = -msg->control.pitch;
-    twist.angular.z = msg->control.yaw_dot;
-    twist.linear.z = crazyflie_utils::pwm::ThrustToPwmDouble(msg->control.thrust);
-  } else {
-    twist.linear.y = 0.0;
-    twist.linear.x = 0.0;
-    twist.angular.z = 0.0;
-    twist.linear.z = 0.0;
-  }
+  // Fill in the Twist, following the conversion process in the
+  // crazyflie_server.cpp file function named "cmdVelChanged()".
+  twist.linear.y = msg->control.roll;
+  twist.linear.x = -msg->control.pitch;
+  twist.angular.z = msg->control.yaw_dot;
+  twist.linear.z = crazyflie_utils::pwm::ThrustToPwmDouble(msg->control.thrust);
 
   cmd_vel_pub_.publish(twist);
-}
-
-// Takeoff service. Set in_flight_ flag to true.
-bool CmdVelConverter::
-TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
-  ROS_INFO("%s: Takeoff requested.", name_.c_str());
-  in_flight_ = true;
-}
-
-// Landing service. Set in_flight_ flag to false.
-bool CmdVelConverter::
-LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
-  ROS_INFO("%s: Landing requested.", name_.c_str());
-  in_flight_ = false;
 }
 
 } //\namespace crazyflie_control_merger

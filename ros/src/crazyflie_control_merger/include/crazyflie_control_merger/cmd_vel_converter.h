@@ -52,9 +52,8 @@
 
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
-#include <std_srvs/Empty.h>
+#include <std_msgs/Empty.h>
 #include <math.h>
-#include <fstream>
 
 namespace crazyflie_control_merger {
 
@@ -62,8 +61,7 @@ class CmdVelConverter {
 public:
   ~CmdVelConverter() {}
   explicit CmdVelConverter()
-    : in_flight_(false),
-      initialized_(false) {}
+    : initialized_(false) {}
 
   // Initialize this class.
   bool Initialize(const ros::NodeHandle& n);
@@ -76,27 +74,12 @@ private:
   // Process an incoming reference point.
   void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
 
-  // Takeoff service. Set in_flight_ flag to true.
-  bool TakeoffService(std_srvs::Empty::Request& req,
-                      std_srvs::Empty::Response& res);
-
-  // Landing service. Set in_flight_ flag to false.
-  bool LandService(std_srvs::Empty::Request& req,
-                   std_srvs::Empty::Response& res);
-
   // Publishers, subscribers, and topics.
   ros::Publisher cmd_vel_pub_;
   ros::Subscriber control_sub_;
 
   std::string cmd_vel_topic_;
   std::string control_topic_;
-
-  // Takeoff and landing services.
-  ros::ServiceServer takeoff_srv_;
-  ros::ServiceServer land_srv_;
-
-  // Flag for whether takeoff has been called (and land has not).
-  bool in_flight_;
 
   // Naming and initialization.
   bool initialized_;

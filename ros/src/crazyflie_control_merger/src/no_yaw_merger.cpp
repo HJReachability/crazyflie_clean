@@ -78,7 +78,7 @@ bool NoYawMerger::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("topics/prioritized_control", no_yaw_control_topic_))
     return false;
   if (!nl.getParam("topics/merged", merged_topic_)) return false;
-
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
   return true;
 }
 
@@ -97,9 +97,18 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
   merged_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     merged_topic_.c_str(), 10, false);
 
+  in_flight_pub_ = nl.advertise<std_msgs::Empty>(
+    in_flight_topic_.c_str(), 10, false);
+
+  // Services.
+  takeoff_srv_ = nl.advertiseService(
+    "/takeoff", &NoYawMerger::TakeoffService, this);
+
+  land_srv_ = nl.advertiseService(
+    "/land", &NoYawMerger::LandService, this);
+
   // Timer.
-  timer_ =
-    nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
+  timer_ = nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
 
   return true;
 }
@@ -120,23 +129,82 @@ void NoYawMerger::NoYawControlCallback(
 
 // Timer callback.
 void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
+  if (!in_flight_)
+    return;
+
   if (!control_been_updated_ || !no_yaw_control_been_updated_)
     return;
 
-  // Extract no yaw priority
-  const double p = no_yaw_control_.priority;
-  //const double p = 1.0;
-
-  // Set message fields.
   crazyflie_msgs::ControlStamped msg;
   msg.header.stamp = ros::Time::now();
 
+  // Extract no yaw priority
+  const double p = no_yaw_control_.priority;
+
+  // Set message fields.
   msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
   msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
   msg.control.yaw_dot = 0.0; //control_.yaw_dot;
   msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
 
   merged_pub_.publish(msg);
+}
+
+// Takeoff service. Set in_flight_ flag to true.
+bool NoYawMerger::
+TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
+  ROS_INFO("%s: Takeoff requested.", name_.c_str());
+
+  // Lift off, and after a short wait return.
+  const ros::Time right_now = ros::Time::now();
+  while ((ros::Time::now() - right_now).toSec() < 1.0) {
+    crazyflie_msgs::ControlStamped msg;
+    msg.header.stamp = ros::Time::now();
+
+    msg.control.roll = 0.0;
+    msg.control.pitch = 0.0;
+    msg.control.yaw_dot = 0.0;
+
+    // Offset gravity, plus a little extra to lift off.
+    msg.control.thrust = crazyflie_utils::constants::G + 0.1;
+
+    merged_pub_.publish(msg);
+
+    // Sleep a little, then rerun the loop.
+    ros::Duration(0.01).sleep();
+  }
+
+  // Send the in_flight signal to all other nodes!
+  in_flight_pub_.publish(std_msgs::Empty());
+
+  in_flight_ = true;
+}
+
+// Landing service. Set in_flight_ flag to false.
+bool NoYawMerger::
+LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
+  ROS_INFO("%s: Landing requested.", name_.c_str());
+
+  const ros::Time right_now = ros::Time::now();
+  while ((ros::Time::now() - right_now).toSec() < 1.0) {
+    crazyflie_msgs::ControlStamped msg;
+    msg.header.stamp = ros::Time::now();
+
+    msg.control.roll = 0.0;
+    msg.control.pitch = 0.0;
+    msg.control.yaw_dot = 0.0;
+
+    // Slowly decrement thrust.
+    msg.control.thrust = std::max(0.0, crazyflie_utils::constants::G -
+                                  5.0 * (ros::Time::now() - right_now).toSec());
+
+    merged_pub_.publish(msg);
+
+    // Sleep a little, then rerun the loop.
+    ros::Duration(0.01).sleep();
+  }
+
+  in_flight_ = false;
 }
 
 } //\namespace crazyflie_control_merger

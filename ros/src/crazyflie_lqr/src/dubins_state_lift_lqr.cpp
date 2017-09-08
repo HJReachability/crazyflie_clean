@@ -80,6 +80,9 @@ bool DubinsStateLiftLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   reference_sub_ = nl.subscribe(
     reference_topic_.c_str(), 10, &DubinsStateLiftLqr::ReferenceCallback, this);
 
+  in_flight_sub_ = nl.subscribe(
+    in_flight_topic_.c_str(), 10, &DubinsStateLiftLqr::InFlightCallback, this);
+
   // Control publisher.
   control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     control_topic_.c_str(), 10, false);

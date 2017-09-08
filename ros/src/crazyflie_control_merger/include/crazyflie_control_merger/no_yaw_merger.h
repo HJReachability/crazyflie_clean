@@ -52,6 +52,8 @@
 #include <crazyflie_msgs/NoYawControl.h>
 
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
+#include <std_msgs/Empty.h>
 #include <math.h>
 #include <fstream>
 
@@ -63,6 +65,7 @@ public:
   explicit NoYawMerger()
     : control_been_updated_(false),
       no_yaw_control_been_updated_(false),
+      in_flight_(false),
       initialized_(false) {}
 
   // Initialize this class.
@@ -83,6 +86,14 @@ private:
   // Timer callback.
   void TimerCallback(const ros::TimerEvent& e);
 
+  // Takeoff service. Set in_flight_ flag to true.
+  bool TakeoffService(std_srvs::Empty::Request& req,
+                      std_srvs::Empty::Response& res);
+
+  // Landing service. Set in_flight_ flag to false.
+  bool LandService(std_srvs::Empty::Request& req,
+                   std_srvs::Empty::Response& res);
+
   // Most recent control signals.
   crazyflie_msgs::Control control_;
   crazyflie_msgs::NoYawControl no_yaw_control_;
@@ -97,12 +108,19 @@ private:
 
   // Publishers, subscribers, and topics.
   ros::Publisher merged_pub_;
+  ros::Publisher in_flight_pub_;
   ros::Subscriber control_sub_;
   ros::Subscriber no_yaw_control_sub_;
 
   std::string merged_topic_;
   std::string control_topic_;
   std::string no_yaw_control_topic_;
+  std::string in_flight_topic_;
+
+  // Takeoff and landing services.
+  ros::ServiceServer takeoff_srv_;
+  ros::ServiceServer land_srv_;
+  bool in_flight_;
 
   // Naming and initialization.
   bool initialized_;

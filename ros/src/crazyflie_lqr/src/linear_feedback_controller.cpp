@@ -88,7 +88,6 @@ bool LinearFeedbackController::LoadFromDisk() {
   return true;
 }
 
-
 // Load parameters. This may be overridden by derived classes.
 bool LinearFeedbackController::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
@@ -110,6 +109,7 @@ bool LinearFeedbackController::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("topics/state", state_topic_)) return false;
   if (!nl.getParam("topics/reference", reference_topic_)) return false;
   if (!nl.getParam("topics/control", control_topic_)) return false;
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
 
   return true;
 }

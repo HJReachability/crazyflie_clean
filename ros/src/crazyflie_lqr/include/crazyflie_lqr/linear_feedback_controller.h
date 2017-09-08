@@ -48,6 +48,7 @@
 #include <crazyflie_utils/angles.h>
 
 #include <ros/ros.h>
+#include <std_msgs/Empty.h>
 #include <math.h>
 #include <fstream>
 
@@ -63,7 +64,8 @@ public:
 
 protected:
   explicit LinearFeedbackController()
-    : initialized_(false) {}
+    : in_flight_(false),
+      initialized_(false) {}
 
   // Load parameters and register callbacks. These may/must be overridden
   // by derived classes.
@@ -90,13 +92,16 @@ protected:
   // Publishers and subscribers.
   ros::Subscriber state_sub_;
   ros::Subscriber reference_sub_;
+  ros::Subscriber in_flight_sub_;
   ros::Publisher control_pub_;
 
   std::string state_topic_;
   std::string reference_topic_;
   std::string control_topic_;
+  std::string in_flight_topic_;
 
   // Initialized flag and name.
+  bool in_flight_;
   bool initialized_;
   std::string name_;
 }; //\class LinearFeedbackController

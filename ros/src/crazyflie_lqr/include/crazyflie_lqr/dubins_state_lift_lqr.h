@@ -74,6 +74,11 @@ private:
 
   // Process an incoming state measurement.
   void StateCallback(const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg);
+
+  // Process a signal from the in flight topic.
+  inline void InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
+    in_flight_ = true;
+  }
 }; //\class DubinsStateLiftLqr
 
 #endif
