@@ -62,7 +62,8 @@ class CmdVelConverter {
 public:
   ~CmdVelConverter() {}
   explicit CmdVelConverter()
-    : initialized_(false) {}
+    : in_flight_(false),
+      initialized_(false) {}
 
   // Initialize this class.
   bool Initialize(const ros::NodeHandle& n);

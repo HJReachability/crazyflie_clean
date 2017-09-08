@@ -90,10 +90,10 @@ bool CmdVelConverter::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Services.
   takeoff_srv_ = nl.advertiseService(
-   "takeoff", &CmdVelConverter::TakeoffService, this);
+   "/takeoff", &CmdVelConverter::TakeoffService, this);
 
   land_srv_ = nl.advertiseService(
-   "land", &CmdVelConverter::LandService, this);
+   "/land", &CmdVelConverter::LandService, this);
 
   return true;
 }
