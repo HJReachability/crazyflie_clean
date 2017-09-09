@@ -132,20 +132,26 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
   if (!in_flight_)
     return;
 
-  if (!control_been_updated_ || !no_yaw_control_been_updated_)
-    return;
-
   crazyflie_msgs::ControlStamped msg;
   msg.header.stamp = ros::Time::now();
 
-  // Extract no yaw priority
-  const double p = no_yaw_control_.priority;
+  if (!control_been_updated_ || !no_yaw_control_been_updated_) {
+    // Drift until control is received.
+    msg.control.roll = 0.0;
+    msg.control.pitch = 0.0;
+    msg.control.yaw_dot = 0.0;
+    msg.control.thrust = crazyflie_utils::constants::G;
+  } else {
+    // Extract no yaw priority.
+    //    const double p = no_yaw_control_.priority;
+    const double p = 0.0;
 
-  // Set message fields.
-  msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
-  msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
-  msg.control.yaw_dot = 0.0; //control_.yaw_dot;
-  msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
+    // Set message fields.
+    msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
+    msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
+    msg.control.yaw_dot = control_.yaw_dot;
+    msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
+  }
 
   merged_pub_.publish(msg);
 }
@@ -166,7 +172,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
     msg.control.yaw_dot = 0.0;
 
     // Offset gravity, plus a little extra to lift off.
-    msg.control.thrust = crazyflie_utils::constants::G + 0.2;
+    msg.control.thrust = crazyflie_utils::constants::G + 0.1;
 
     merged_pub_.publish(msg);
 

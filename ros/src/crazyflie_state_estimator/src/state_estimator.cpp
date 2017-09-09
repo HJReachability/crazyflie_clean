@@ -124,6 +124,7 @@ void StateEstimator::TimerCallback(const ros::TimerEvent& e) {
                          tf.transform.rotation.x,
                          tf.transform.rotation.y,
                          tf.transform.rotation.z);
+
   // Multiply by sign of x component to ensure quaternion giving the preferred
   // Euler transformation (here we're exploiting the fact that rot(q)=rot(-q) ).
   Eigen::Matrix3d R = quat.toRotationMatrix();

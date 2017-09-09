@@ -97,9 +97,9 @@ ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
 
   // Fill in the Twist, following the conversion process in the
   // crazyflie_server.cpp file function named "cmdVelChanged()".
-  twist.linear.y = msg->control.roll;
-  twist.linear.x = -msg->control.pitch;
-  twist.angular.z = msg->control.yaw_dot;
+  twist.linear.y = crazyflie_utils::angles::RadiansToDegrees(msg->control.roll);
+  twist.linear.x = -crazyflie_utils::angles::RadiansToDegrees(msg->control.pitch);
+  twist.angular.z = crazyflie_utils::angles::RadiansToDegrees(msg->control.yaw_dot);
   twist.linear.z = crazyflie_utils::pwm::ThrustToPwmDouble(msg->control.thrust);
 
   cmd_vel_pub_.publish(twist);
