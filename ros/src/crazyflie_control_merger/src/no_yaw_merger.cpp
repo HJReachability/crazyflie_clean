@@ -157,7 +157,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
 
   // Lift off, and after a short wait return.
   const ros::Time right_now = ros::Time::now();
-  while ((ros::Time::now() - right_now).toSec() < 1.0) {
+  while ((ros::Time::now() - right_now).toSec() < 2.0) {
     crazyflie_msgs::ControlStamped msg;
     msg.header.stamp = ros::Time::now();
 
@@ -166,7 +166,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
     msg.control.yaw_dot = 0.0;
 
     // Offset gravity, plus a little extra to lift off.
-    msg.control.thrust = crazyflie_utils::constants::G + 0.1;
+    msg.control.thrust = crazyflie_utils::constants::G + 0.2;
 
     merged_pub_.publish(msg);
 
