@@ -143,8 +143,11 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
     msg.control.thrust = crazyflie_utils::constants::G;
   } else {
     // Extract no yaw priority.
-    //    const double p = no_yaw_control_.priority;
-    const double p = 0.0;
+    double p = no_yaw_control_.priority;
+    if (p < 0.95 || p > 0.99)
+      p = 0.0;
+
+    //const double p = 0.0;
 
     // Set message fields.
     msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
