@@ -142,7 +142,9 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
     msg.control.yaw_dot = 0.0;
     msg.control.thrust = crazyflie_utils::constants::G;
   } else {
-    // Extract no yaw priority.
+    // Extract no yaw priority and only use if slightly less than 1.
+    // HACK! This is only necessary because bang bang does not work very
+    // well when the system actually has inertia...
     double p = no_yaw_control_.priority;
     if (p < 0.95 || p > 0.99)
       p = 0.0;
