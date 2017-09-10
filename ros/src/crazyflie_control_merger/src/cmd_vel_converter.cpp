@@ -97,6 +97,8 @@ ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
 
   // Fill in the Twist, following the conversion process in the
   // crazyflie_server.cpp file function named "cmdVelChanged()".
+  // NOTE! Some dimensions have been flipped and/or converted to degrees
+  // in order to conform to expectations of the crazyflie firmware.
   twist.linear.y = crazyflie_utils::angles::RadiansToDegrees(msg->control.roll);
   twist.linear.x = crazyflie_utils::angles::RadiansToDegrees(msg->control.pitch);
   twist.angular.z = -crazyflie_utils::angles::RadiansToDegrees(msg->control.yaw_dot);
