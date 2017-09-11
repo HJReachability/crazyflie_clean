@@ -189,6 +189,9 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   in_flight_pub_.publish(std_msgs::Empty());
 
   in_flight_ = true;
+
+  // Return true.
+  return true;
 }
 
 // Landing service. Set in_flight_ flag to false.
@@ -216,6 +219,9 @@ LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   }
 
   in_flight_ = false;
+
+  // Return true.
+  return true;
 }
 
 } //\namespace crazyflie_control_merger
