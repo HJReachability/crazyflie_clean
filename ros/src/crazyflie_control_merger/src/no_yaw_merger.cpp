@@ -79,6 +79,7 @@ bool NoYawMerger::LoadParameters(const ros::NodeHandle& n) {
     return false;
   if (!nl.getParam("topics/merged", merged_topic_)) return false;
   if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
+  if (!nl.getParam("topics/reference", reference_topic_)) return false;
   return true;
 }
 
@@ -93,9 +94,11 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
   no_yaw_control_sub_ = nl.subscribe(
     no_yaw_control_topic_.c_str(), 10, &NoYawMerger::NoYawControlCallback, this);
 
-  // Publisher.
+  // Publishers.
   merged_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     merged_topic_.c_str(), 10, false);
+  reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
+    reference_topic_.c_str(), 10, false); // Only for takeoff service
 
   in_flight_pub_ = nl.advertise<std_msgs::Empty>(
     in_flight_topic_.c_str(), 10, false);
@@ -146,7 +149,7 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
     // HACK! This is only necessary because bang bang does not work very
     // well when the system actually has inertia...
     double p = no_yaw_control_.priority;
-    if (p < 0.95 || p > 0.99)
+    if (p < 0.8 || p >= 1.0)
       p = 0.0;
 
     //const double p = 0.0;
@@ -162,13 +165,14 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
 }
 
 // Takeoff service. Set in_flight_ flag to true.
+//ISSUE: ROS services are BLOCKING, need to define as ACTIONLIB instead or LQR won't work.
 bool NoYawMerger::
 TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   ROS_INFO("%s: Takeoff requested.", name_.c_str());
 
   // Lift off, and after a short wait return.
   const ros::Time right_now = ros::Time::now();
-  while ((ros::Time::now() - right_now).toSec() < 2.0) {
+  while ((ros::Time::now() - right_now).toSec() < 1.0) {
     crazyflie_msgs::ControlStamped msg;
     msg.header.stamp = ros::Time::now();
 
@@ -185,13 +189,29 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
     ros::Duration(0.01).sleep();
   }
 
-  // Send the in_flight signal to all other nodes!
-  in_flight_pub_.publish(std_msgs::Empty());
+  // Send reference to LQR.
+  crazyflie_msgs::PositionStateStamped reference;
+  reference.header.stamp = ros::Time::now();
+  reference.state.x = 0.0;
+  reference.state.y = 0.0;
+  reference.state.z = 0.5;
+  reference.state.x_dot = 0.0;
+  reference.state.y_dot = 0.0;
+  reference.state.z_dot = 0.0;
+
+  reference_pub_.publish(reference);
 
   in_flight_ = true;
 
+  // Give LQR time to get there.
+  ros::Duration(2.0).sleep();
+
+  // Send the in_flight signal to all other nodes!
+  in_flight_pub_.publish(std_msgs::Empty());
+
   // Return true.
   return true;
+
 }
 
 // Landing service. Set in_flight_ flag to false.

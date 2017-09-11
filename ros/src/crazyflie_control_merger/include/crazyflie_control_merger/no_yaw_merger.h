@@ -50,6 +50,7 @@
 #include <crazyflie_msgs/Control.h>
 #include <crazyflie_msgs/NoYawControlStamped.h>
 #include <crazyflie_msgs/NoYawControl.h>
+#include <crazyflie_msgs/PositionStateStamped.h>
 
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
@@ -109,6 +110,7 @@ private:
   // Publishers, subscribers, and topics.
   ros::Publisher merged_pub_;
   ros::Publisher in_flight_pub_;
+  ros::Publisher reference_pub_;
   ros::Subscriber control_sub_;
   ros::Subscriber no_yaw_control_sub_;
 
@@ -116,6 +118,7 @@ private:
   std::string control_topic_;
   std::string no_yaw_control_topic_;
   std::string in_flight_topic_;
+  std::string reference_topic_;
 
   // Takeoff and landing services.
   ros::ServiceServer takeoff_srv_;
