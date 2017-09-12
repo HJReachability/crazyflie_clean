@@ -52,7 +52,7 @@ bool NearHoverSimulator::Initialize(const ros::NodeHandle& n) {
   // Set state and control to zero initially.
   x_ = VectorXd::Zero(7);
   u_ = VectorXd::Zero(4);
-  u_(3) = crazyflie_utils::constants::G;
+  //  u_(3) = crazyflie_utils::constants::G;
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -119,6 +119,13 @@ void NearHoverSimulator::TimerCallback(const ros::TimerEvent& e) {
   // Only update state if we have received a control signal from outside.
   if (received_control_)
     x_ += dynamics_(x_, u_) * (now - last_time_).toSec();
+
+  // Threshold at ground!
+  if (x_(2) < 0.0) {
+    // HACK! Assuming state layout.
+    x_(2) = 0.0;
+    x_(5) = std::max(0.0, x_(5));
+  }
 
   // Update last time.
   last_time_ = now;

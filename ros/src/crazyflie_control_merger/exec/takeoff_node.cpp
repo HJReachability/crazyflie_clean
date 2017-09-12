@@ -36,71 +36,26 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Linear feedback controller that reads in control/references from files.
-// Controllers for specific state spaces will be derived from this class.
+// The Takeoff node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
-#define CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
-
-#include <crazyflie_utils/types.h>
-#include <crazyflie_utils/angles.h>
-
 #include <ros/ros.h>
-#include <std_msgs/Empty.h>
-#include <math.h>
-#include <fstream>
+#include <crazyflie_control_merger/takeoff.h>
 
-class LinearFeedbackController {
-public:
-  virtual ~LinearFeedbackController() {}
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "takeoff");
+  ros::NodeHandle n("~");
 
-  // Initialize this class by reading parameters and loading callbacks.
-  virtual bool Initialize(const ros::NodeHandle& n) = 0;
+  crazyflie_control_merger::Takeoff takeoff;
 
-  // Compute control given the current state.
-  virtual VectorXd Control(const VectorXd& x) const;
+  if (!takeoff.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize takeoff.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
+  }
 
-protected:
-  explicit LinearFeedbackController()
-    : received_reference_(false),
-      initialized_(false) {}
+  ros::spin();
 
-  // Load parameters and register callbacks. These may/must be overridden
-  // by derived classes.
-  virtual bool LoadParameters(const ros::NodeHandle& n);
-  virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
-
-  // Load K, x_ref, u_ref from disk.
-  bool LoadFromDisk();
-
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
-
-  std::string K_filename_;
-  std::string u_ref_filename_;
-
-  // Dimensions of control and state spaces.
-  size_t x_dim_;
-  size_t u_dim_;
-
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
-  ros::Publisher control_pub_;
-
-  std::string state_topic_;
-  std::string reference_topic_;
-  std::string control_topic_;
-
-  // Initialized flag and name.
-  bool received_reference_;
-  bool initialized_;
-  std::string name_;
-}; //\class LinearFeedbackController
-
-#endif
+  return EXIT_SUCCESS;
+}

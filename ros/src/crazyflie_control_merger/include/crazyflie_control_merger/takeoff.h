@@ -36,71 +36,66 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Linear feedback controller that reads in control/references from files.
-// Controllers for specific state spaces will be derived from this class.
+// Class to provide takeoff service.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
-#define CRAZYFLIE_LQR_LINEAR_FEEDBACK_CONTROLLER_H
+#ifndef CRAZYFLIE_CONTROL_MERGER_TAKEOFF_H
+#define CRAZYFLIE_CONTROL_MERGER_TAKEOFF_H
 
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/ControlStamped.h>
+#include <crazyflie_msgs/Control.h>
+#include <crazyflie_msgs/NoYawControlStamped.h>
+#include <crazyflie_msgs/NoYawControl.h>
+#include <crazyflie_msgs/PositionStateStamped.h>
 
 #include <ros/ros.h>
+#include <std_srvs/Empty.h>
 #include <std_msgs/Empty.h>
 #include <math.h>
 #include <fstream>
 
-class LinearFeedbackController {
+namespace crazyflie_control_merger {
+
+class Takeoff {
 public:
-  virtual ~LinearFeedbackController() {}
-
-  // Initialize this class by reading parameters and loading callbacks.
-  virtual bool Initialize(const ros::NodeHandle& n) = 0;
-
-  // Compute control given the current state.
-  virtual VectorXd Control(const VectorXd& x) const;
-
-protected:
-  explicit LinearFeedbackController()
-    : received_reference_(false),
+  ~Takeoff() {}
+  explicit Takeoff()
+    : in_flight_(false),
       initialized_(false) {}
 
-  // Load parameters and register callbacks. These may/must be overridden
-  // by derived classes.
-  virtual bool LoadParameters(const ros::NodeHandle& n);
-  virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
+  // Initialize this class.
+  bool Initialize(const ros::NodeHandle& n);
 
-  // Load K, x_ref, u_ref from disk.
-  bool LoadFromDisk();
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // K matrix and reference state/control (to fight gravity). These are
-  // hard-coded since they will not change.
-  MatrixXd K_;
-  VectorXd u_ref_;
-  VectorXd x_ref_;
+  // Takeoff service. Set in_flight_ flag to true.
+  bool TakeoffService(std_srvs::Empty::Request& req,
+                      std_srvs::Empty::Response& res);
 
-  std::string K_filename_;
-  std::string u_ref_filename_;
-
-  // Dimensions of control and state spaces.
-  size_t x_dim_;
-  size_t u_dim_;
-
-  // Publishers and subscribers.
-  ros::Subscriber state_sub_;
-  ros::Subscriber reference_sub_;
+  // Publishers, subscribers, and topics.
   ros::Publisher control_pub_;
+  ros::Publisher in_flight_pub_;
+  ros::Publisher reference_pub_;
 
-  std::string state_topic_;
-  std::string reference_topic_;
   std::string control_topic_;
+  std::string in_flight_topic_;
+  std::string reference_topic_;
 
-  // Initialized flag and name.
-  bool received_reference_;
+  // Takeoff service.
+  ros::ServiceServer takeoff_srv_;
+  bool in_flight_;
+
+  // Naming and initialization.
   bool initialized_;
   std::string name_;
-}; //\class LinearFeedbackController
+}; //\class Takeoff
+
+} //\crazyflie_control_merger
 
 #endif

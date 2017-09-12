@@ -66,7 +66,7 @@ public:
   explicit NoYawMerger()
     : control_been_updated_(false),
       no_yaw_control_been_updated_(false),
-      in_flight_(false),
+      landed_(false),
       initialized_(false) {}
 
   // Initialize this class.
@@ -109,23 +109,18 @@ private:
 
   // Publishers, subscribers, and topics.
   ros::Publisher merged_pub_;
-  ros::Publisher in_flight_pub_;
-  ros::Publisher reference_pub_;
   ros::Subscriber control_sub_;
   ros::Subscriber no_yaw_control_sub_;
 
   std::string merged_topic_;
   std::string control_topic_;
   std::string no_yaw_control_topic_;
-  std::string in_flight_topic_;
-  std::string reference_topic_;
 
   // Takeoff and landing services.
-  ros::ServiceServer takeoff_srv_;
   ros::ServiceServer land_srv_;
-  bool in_flight_;
 
   // Naming and initialization.
+  bool landed_;
   bool initialized_;
   std::string name_;
 }; //\class NoYawMerger

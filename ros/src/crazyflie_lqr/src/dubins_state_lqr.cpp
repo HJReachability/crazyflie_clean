@@ -78,9 +78,6 @@ bool DubinsStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   reference_sub_ = nl.subscribe(
     reference_topic_.c_str(), 10, &DubinsStateLqr::ReferenceCallback, this);
 
-  in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 10, &DubinsStateLqr::InFlightCallback, this);
-
   // Control publisher.
   control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     control_topic_.c_str(), 10, false);
@@ -98,11 +95,17 @@ void DubinsStateLqr::ReferenceCallback(
   x_ref_(4) = msg->state.y_dot;
   x_ref_(5) = msg->state.z_dot;
   x_ref_(6) = msg->state.yaw;
+
+  received_reference_ = true;
 }
 
 // Process an incoming state measurement.
 void DubinsStateLqr::StateCallback(
   const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg) {
+  // Catch no reference.
+  if (!received_reference_)
+    return;
+
   // Read the message into the state and compute relative state.
   VectorXd x(x_dim_);
   x(0) = msg->state.x;

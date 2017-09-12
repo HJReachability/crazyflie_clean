@@ -51,7 +51,6 @@ bool LinearFeedbackController::LoadFromDisk() {
   u_ref_ = VectorXd::Zero(u_dim_);
 
   std::ifstream K_file(K_filename_);
-  std::ifstream x_ref_file(x_ref_filename_);
   std::ifstream u_ref_file(u_ref_filename_);
 
   // Read K.
@@ -61,15 +60,6 @@ bool LinearFeedbackController::LoadFromDisk() {
         K_file >> K_(ii, jj);
   } else {
     ROS_ERROR("%s: Could not find %s.", name_.c_str(), K_filename_.c_str());
-    return false;
-  }
-
-  // Read x_ref.
-  if (x_ref_file.is_open()) {
-    for (size_t ii = 0; ii < x_dim_ && x_ref_file.good(); ii++)
-      x_ref_file >> x_ref_(ii);
-  } else {
-    ROS_ERROR("%s: Could not find %s.", name_.c_str(), x_ref_filename_.c_str());
     return false;
   }
 
@@ -83,7 +73,6 @@ bool LinearFeedbackController::LoadFromDisk() {
   }
 
   std::cout << "K is: \n" << K_ << std::endl;
-  std::cout << "xref is: \n" << x_ref_.transpose() << std::endl;
   std::cout << "uref is: \n" << u_ref_.transpose() << std::endl;
   return true;
 }
@@ -95,7 +84,6 @@ bool LinearFeedbackController::LoadParameters(const ros::NodeHandle& n) {
   // Text files with K, x_ref, u_ref.
   if (!nl.getParam("K_file", K_filename_)) return false;
   if (!nl.getParam("u_ref_file", u_ref_filename_)) return false;
-  if (!nl.getParam("x_ref_file", x_ref_filename_)) return false;
 
   // Dimensions.
   int dimension = 1;
@@ -109,7 +97,6 @@ bool LinearFeedbackController::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("topics/state", state_topic_)) return false;
   if (!nl.getParam("topics/reference", reference_topic_)) return false;
   if (!nl.getParam("topics/control", control_topic_)) return false;
-  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
 
   return true;
 }
@@ -128,6 +115,11 @@ VectorXd LinearFeedbackController::Control(const VectorXd& x) const {
     return u_ref_;
   }
 #endif
+
+  if (!received_reference_) {
+    ROS_WARN("%s: Tried to get control before sending reference.", name_.c_str());
+    return VectorXd::Zero(u_dim_);
+  }
 
   return K_ * (x - x_ref_) + u_ref_;
 }

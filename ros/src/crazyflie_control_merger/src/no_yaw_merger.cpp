@@ -78,8 +78,6 @@ bool NoYawMerger::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("topics/prioritized_control", no_yaw_control_topic_))
     return false;
   if (!nl.getParam("topics/merged", merged_topic_)) return false;
-  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
-  if (!nl.getParam("topics/reference", reference_topic_)) return false;
   return true;
 }
 
@@ -97,18 +95,9 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
   // Publishers.
   merged_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     merged_topic_.c_str(), 10, false);
-  reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
-    reference_topic_.c_str(), 10, false); // Only for takeoff service
 
-  in_flight_pub_ = nl.advertise<std_msgs::Empty>(
-    in_flight_topic_.c_str(), 10, false);
-
-  // Services.
-  takeoff_srv_ = nl.advertiseService(
-    "/takeoff", &NoYawMerger::TakeoffService, this);
-
-  land_srv_ = nl.advertiseService(
-    "/land", &NoYawMerger::LandService, this);
+    // Services.
+  land_srv_ = nl.advertiseService("/land", &NoYawMerger::LandService, this);
 
   // Timer.
   timer_ = nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
@@ -132,18 +121,18 @@ void NoYawMerger::NoYawControlCallback(
 
 // Timer callback.
 void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
-  if (!in_flight_)
+  if (landed_)
     return;
 
   crazyflie_msgs::ControlStamped msg;
   msg.header.stamp = ros::Time::now();
 
-  if (!control_been_updated_ || !no_yaw_control_been_updated_) {
+  if (!control_been_updated_) {
+    // Takeoff node may be operating.. just return.
+    return;
+  } else if (!no_yaw_control_been_updated_) {
     // Drift until control is received.
-    msg.control.roll = 0.0;
-    msg.control.pitch = 0.0;
-    msg.control.yaw_dot = 0.0;
-    msg.control.thrust = crazyflie_utils::constants::G;
+    msg.control = control_;
   } else {
     // Extract no yaw priority and only use if slightly less than 1.
     // HACK! This is only necessary because bang bang does not work very
@@ -164,57 +153,7 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
   merged_pub_.publish(msg);
 }
 
-// Takeoff service. Set in_flight_ flag to true.
-//ISSUE: ROS services are BLOCKING, need to define as ACTIONLIB instead or LQR won't work.
-bool NoYawMerger::
-TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
-  ROS_INFO("%s: Takeoff requested.", name_.c_str());
-
-  // Lift off, and after a short wait return.
-  const ros::Time right_now = ros::Time::now();
-  while ((ros::Time::now() - right_now).toSec() < 1.0) {
-    crazyflie_msgs::ControlStamped msg;
-    msg.header.stamp = ros::Time::now();
-
-    msg.control.roll = 0.0;
-    msg.control.pitch = 0.0;
-    msg.control.yaw_dot = 0.0;
-
-    // Offset gravity, plus a little extra to lift off.
-    msg.control.thrust = crazyflie_utils::constants::G + 0.1;
-
-    merged_pub_.publish(msg);
-
-    // Sleep a little, then rerun the loop.
-    ros::Duration(0.01).sleep();
-  }
-
-  // Send reference to LQR.
-  crazyflie_msgs::PositionStateStamped reference;
-  reference.header.stamp = ros::Time::now();
-  reference.state.x = 0.0;
-  reference.state.y = 0.0;
-  reference.state.z = 0.5;
-  reference.state.x_dot = 0.0;
-  reference.state.y_dot = 0.0;
-  reference.state.z_dot = 0.0;
-
-  reference_pub_.publish(reference);
-
-  in_flight_ = true;
-
-  // Give LQR time to get there.
-  ros::Duration(2.0).sleep();
-
-  // Send the in_flight signal to all other nodes!
-  in_flight_pub_.publish(std_msgs::Empty());
-
-  // Return true.
-  return true;
-
-}
-
-// Landing service. Set in_flight_ flag to false.
+// Landing service.
 bool NoYawMerger::
 LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   ROS_INFO("%s: Landing requested.", name_.c_str());
@@ -238,7 +177,7 @@ LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
     ros::Duration(0.01).sleep();
   }
 
-  in_flight_ = false;
+  landed_ = true;
 
   // Return true.
   return true;

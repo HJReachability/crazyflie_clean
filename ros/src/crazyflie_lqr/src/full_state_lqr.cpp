@@ -78,9 +78,6 @@ bool FullStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   reference_sub_ = nl.subscribe(
     reference_topic_.c_str(), 10, &FullStateLqr::ReferenceCallback, this);
 
-  in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 10, &FullStateLqr::InFlightCallback, this);
-
   // Control publisher.
   control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     control_topic_.c_str(), 10, false);
@@ -103,11 +100,17 @@ void FullStateLqr::ReferenceCallback(
   x_ref_(9) = msg->state.roll_dot;
   x_ref_(10) = msg->state.pitch_dot;
   x_ref_(11) = msg->state.yaw_dot;
+
+  received_reference_ = true;
 }
 
 // Process an incoming state measurement.
 void FullStateLqr::StateCallback(
   const crazyflie_msgs::FullStateStamped::ConstPtr& msg) {
+  // Catch no reference.
+  if (!received_reference_)
+    return;
+
   // Read the message into the state and compute relative state.
   VectorXd x(x_dim_);
   x(0) = msg->state.x;
