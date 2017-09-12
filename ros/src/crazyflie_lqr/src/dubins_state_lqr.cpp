@@ -73,14 +73,14 @@ bool DubinsStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Subscribers.
   state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 10, &DubinsStateLqr::StateCallback, this);
+    state_topic_.c_str(), 1, &DubinsStateLqr::StateCallback, this);
 
   reference_sub_ = nl.subscribe(
-    reference_topic_.c_str(), 10, &DubinsStateLqr::ReferenceCallback, this);
+    reference_topic_.c_str(), 1, &DubinsStateLqr::ReferenceCallback, this);
 
   // Control publisher.
   control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
-    control_topic_.c_str(), 10, false);
+    control_topic_.c_str(), 1, false);
 
   return true;
 }

@@ -82,11 +82,11 @@ bool CmdVelConverter::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Subscribers.
   control_sub_ = nl.subscribe(
-    control_topic_.c_str(), 10, &CmdVelConverter::ControlCallback, this);
+    control_topic_.c_str(), 1, &CmdVelConverter::ControlCallback, this);
 
   // Publishers.
   cmd_vel_pub_ = nl.advertise<geometry_msgs::Twist>(
-    cmd_vel_topic_.c_str(), 10, false);
+    cmd_vel_topic_.c_str(), 1, false);
 
   return true;
 }

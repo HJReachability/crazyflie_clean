@@ -87,14 +87,14 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Subscribers.
   control_sub_ = nl.subscribe(
-    control_topic_.c_str(), 10, &NoYawMerger::ControlCallback, this);
+    control_topic_.c_str(), 1, &NoYawMerger::ControlCallback, this);
 
   no_yaw_control_sub_ = nl.subscribe(
-    no_yaw_control_topic_.c_str(), 10, &NoYawMerger::NoYawControlCallback, this);
+    no_yaw_control_topic_.c_str(), 1, &NoYawMerger::NoYawControlCallback, this);
 
   // Publishers.
   merged_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
-    merged_topic_.c_str(), 10, false);
+    merged_topic_.c_str(), 1, false);
 
     // Services.
   land_srv_ = nl.advertiseService("/land", &NoYawMerger::LandService, this);
@@ -137,11 +137,11 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
     // Extract no yaw priority and only use if slightly less than 1.
     // HACK! This is only necessary because bang bang does not work very
     // well when the system actually has inertia...
-    double p = no_yaw_control_.priority;
+    //    double p = no_yaw_control_.priority;
     //   if (p < 0.8 || p >= 1.0)
     //      p = 0.0;
 
-    //const double p = 0.0;
+    const double p = 1.0;
 
     // Set message fields.
     msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;

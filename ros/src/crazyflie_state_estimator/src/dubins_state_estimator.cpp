@@ -48,7 +48,7 @@ bool DubinsStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // State publisher.
   state_pub_ = nl.advertise<crazyflie_msgs::DubinsStateStamped>(
-    state_topic_.c_str(), 10, false);
+    state_topic_.c_str(), 1, false);
 
   return true;
 }

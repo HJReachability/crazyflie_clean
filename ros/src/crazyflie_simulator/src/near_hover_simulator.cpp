@@ -103,7 +103,7 @@ bool NearHoverSimulator::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Subscribers.
   control_sub_ = nl.subscribe(
-    control_topic_.c_str(), 10, &NearHoverSimulator::ControlCallback, this);
+    control_topic_.c_str(), 1, &NearHoverSimulator::ControlCallback, this);
 
   // Timer.
   timer_ = nl.createTimer(
