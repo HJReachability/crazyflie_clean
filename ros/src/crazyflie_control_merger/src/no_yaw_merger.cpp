@@ -138,8 +138,8 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
     // HACK! This is only necessary because bang bang does not work very
     // well when the system actually has inertia...
     double p = no_yaw_control_.priority;
-    if (p < 0.8 || p >= 1.0)
-      p = 0.0;
+    //   if (p < 0.8 || p >= 1.0)
+    //      p = 0.0;
 
     //const double p = 0.0;
 

@@ -106,6 +106,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   ROS_INFO("%s: Takeoff requested.", name_.c_str());
 
   // Lift off, and after a short wait return.
+#if 0
   const ros::Time right_now = ros::Time::now();
   while ((ros::Time::now() - right_now).toSec() < 2.0) {
     crazyflie_msgs::ControlStamped msg;
@@ -122,6 +123,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
     // Sleep a little, then rerun the loop.
     ros::Duration(0.01).sleep();
   }
+#endif
 
   // Send reference to LQR.
   // HACK! Read this hover point in from the parameter server.
@@ -139,7 +141,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   in_flight_ = true;
 
   // Give LQR time to get there.
-  ros::Duration(5.0).sleep();
+  ros::Duration(10.0).sleep();
 
   // Send the in_flight signal to all other nodes!
   in_flight_pub_.publish(std_msgs::Empty());
