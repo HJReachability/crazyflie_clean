@@ -73,6 +73,8 @@ public:
   bool Initialize(const ros::NodeHandle& n);
 
 private:
+  enum Mode { MERGE, LQR, OPTIMAL };
+
   // Load parameters and register callbacks.
   bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
@@ -115,6 +117,9 @@ private:
   std::string merged_topic_;
   std::string control_topic_;
   std::string no_yaw_control_topic_;
+
+  // Mode, either MERGE, LQR, or OPTIMAL.
+  Mode mode_;
 
   // Takeoff and landing services.
   ros::ServiceServer land_srv_;

@@ -78,6 +78,25 @@ bool NoYawMerger::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("topics/prioritized_control", no_yaw_control_topic_))
     return false;
   if (!nl.getParam("topics/merged", merged_topic_)) return false;
+
+  // Mode.
+  std::string mode;
+  if (!nl.getParam("mode", mode)) return false;
+
+  if (mode == "MERGE") {
+    mode_ = MERGE;
+    ROS_INFO("%s: Entering MERGE mode.", name_.c_str());
+  } else if (mode == "LQR") {
+    mode_ = LQR;
+    ROS_INFO("%s: Entering LQR mode.", name_.c_str());
+  } else if (mode == "OPTIMAL") {
+    mode_ = OPTIMAL;
+    ROS_INFO("%s: Entering OPTIMAL mode.", name_.c_str());
+  } else {
+    ROS_ERROR("%s: Invalid mode. Using LQR.", name_.c_str());
+    mode_ = LQR;
+  }
+
   return true;
 }
 
@@ -131,17 +150,14 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
     // Takeoff node may be operating.. just return.
     return;
   } else if (!no_yaw_control_been_updated_) {
-    // Drift until control is received.
     msg.control = control_;
   } else {
-    // Extract no yaw priority and only use if slightly less than 1.
-    // HACK! This is only necessary because bang bang does not work very
-    // well when the system actually has inertia...
-    //    double p = no_yaw_control_.priority;
-    //   if (p < 0.8 || p >= 1.0)
-    //      p = 0.0;
-
-    const double p = 1.0;
+    // Extract no yaw priority.
+    double p = no_yaw_control_.priority;
+    if (mode_ == LQR)
+      p = 0.0;
+    else if (mode_ == OPTIMAL)
+      p = 1.0;
 
     // Set message fields.
     msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
