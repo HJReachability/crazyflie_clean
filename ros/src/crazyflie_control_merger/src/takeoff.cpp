@@ -71,6 +71,13 @@ bool Takeoff::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
   if (!nl.getParam("topics/reference", reference_topic_)) return false;
 
+  // Hover point.
+  double init_x, init_y, init_z;
+  if (!nl.getParam("hover/x", init_x)) return false;
+  if (!nl.getParam("hover/y", init_y)) return false;
+  if (!nl.getParam("hover/z", init_z)) return false;
+  hover_point_ = Vector3d(init_x, init_y, init_z);
+
   return true;
 }
 
@@ -129,9 +136,9 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   // HACK! Read this hover point in from the parameter server.
   crazyflie_msgs::PositionStateStamped reference;
   reference.header.stamp = ros::Time::now();
-  reference.state.x = 0.0;
-  reference.state.y = 0.0;
-  reference.state.z = 0.5;
+  reference.state.x = hover_point_(0);
+  reference.state.y = hover_point_(1);
+  reference.state.z = hover_point_(2);
   reference.state.x_dot = 0.0;
   reference.state.y_dot = 0.0;
   reference.state.z_dot = 0.0;

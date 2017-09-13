@@ -91,6 +91,9 @@ private:
   ros::ServiceServer takeoff_srv_;
   bool in_flight_;
 
+  // Initial hover point.
+  Vector3d hover_point_;
+
   // Naming and initialization.
   bool initialized_;
   std::string name_;
