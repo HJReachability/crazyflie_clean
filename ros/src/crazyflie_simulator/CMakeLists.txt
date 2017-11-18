@@ -57,6 +57,7 @@ link_directories(
 
 file(GLOB_RECURSE ${PROJECT_NAME}_srcs ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/*.cpp)
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_srcs})
+add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 target_link_libraries(${PROJECT_NAME}
@@ -78,6 +79,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
   get_filename_component(exec_name ${executable} NAME_WE)
   message(STATUS "Including executable   \"${BoldBlue}${exec_name}${ColorReset}\".")
   add_executable(${exec_name} ${executable})
+  add_dependencies(${exec_name} ${catkin_EXPORTED_TARGETS})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
@@ -91,6 +93,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
   get_filename_component(exec_name ${executable} NAME_WE)
   message(STATUS "Including executable   \"${BoldBlue}${exec_name}${ColorReset}\".")
   add_executable(${exec_name} ${executable})
+  add_dependencies(${exec_name} ${catkin_EXPORTED_TARGETS})
   target_link_libraries(${exec_name}
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
