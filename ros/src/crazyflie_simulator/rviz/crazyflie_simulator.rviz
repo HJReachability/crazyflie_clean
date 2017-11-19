@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /Grid1
         - /TF1/Frames1
+        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 727
   - Class: rviz/Selection
@@ -82,9 +83,14 @@ Visualization Manager:
         Expand Joint Details: false
         Expand Link Details: false
         Expand Tree: false
-        Link Tree Style: ""
+        Link Tree Style: Links in Alphabetic Order
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: RobotModel
-      Robot Description: robot_description
+      Robot Description: rviz/robot_description
       TF Prefix: crazyflie
       Update Interval: 0
       Value: true
@@ -113,7 +119,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 8.06653
+      Distance: 1.25299
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -125,10 +131,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.374797
+      Pitch: 0.0997967
       Target Frame: crazyflie
       Value: ThirdPersonFollower (rviz)
-      Yaw: 2.00041
+      Yaw: 3.63541
     Saved: ~
 Window Geometry:
   Displays:

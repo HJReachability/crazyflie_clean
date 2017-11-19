@@ -9,7 +9,7 @@
 
   <!-- Frames of reference. -->
   <arg name="fixed_frame" default="world" />
-  <arg name="crazyflie_frame" default="crazyflie" />
+  <arg name="robot_frame" default="crazyflie" />
 
   <!-- Takeoff hover point. -->
   <arg name="takeoff_hover_x" default="0.0" />
@@ -38,7 +38,7 @@
   <node pkg="tf"
         type="static_transform_publisher"
         name="robot_base_link_publisher"
-        args="0 0 0 0 0 0 1 $(arg crazyflie_frame) $(arg crazyflie_frame)/base_link 100">
+        args="0 0 0 0 0 0 1 $(arg robot_frame) $(arg robot_frame)/base_link 100">
   </node>
 
   <!-- Crazyflie dynamics simulator. -->
@@ -53,12 +53,12 @@
     <param name="init/z" value="$(arg sim_init_z)" />
 
     <param name="frames/fixed" value="$(arg fixed_frame)" />
-    <param name="frames/robot" value="$(arg crazyflie_frame)" />
+    <param name="frames/robot" value="$(arg robot_frame)" />
 
     <param name="topics/control" value="$(arg control_topic)" />
   </node>
 
-  <!-- State estimators. -->
+  <!-- State estimator. -->
   <node name="dubins_state_estimator"
         pkg="crazyflie_state_estimator"
         type="dubins_state_estimator_node"
@@ -68,7 +68,7 @@
     <param name="time_step" value="$(arg estimator_dt)" />
 
     <param name="frames/fixed" value="$(arg fixed_frame)" />
-    <param name="frames/robot" value="$(arg crazyflie_frame)" />
+    <param name="frames/robot" value="$(arg robot_frame)" />
 
     <param name="topics/state" value="$(arg state_topic)" />
   </node>
@@ -114,6 +114,7 @@
         required="true">
 
     <param name="robot_description"
-           command="$(find xacro)/xacro.py $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
+           command="$(find xacro)/xacro.py
+                    $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
   </node>
 </launch>
