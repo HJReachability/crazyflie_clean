@@ -69,3 +69,4 @@ profiling/
 
 # PDFs.
 *.pdf
+!HSL_Crazyflie_Documentation.pdf
