@@ -48,13 +48,20 @@
         args="0 0 0 0 0 0 1 $(arg robot_frame) $(arg robot_frame)/base_link 100">
   </node>
 
+  <!-- TF static publisher to tie the mocap output to the robot frame. -->
+  <node pkg="tf"
+        type="static_transform_publisher"
+        name="mocap_frame_publisher"
+        args="0 0 0 0 0 0 1 $(arg mocap_frame) $(arg robot_frame) 100">
+  </node>
+
   <!-- Crazyflie interface. -->
   <include file="$(find crazyflie_driver)/launch/crazyflie_server.launch" />
 
   <group ns="crazyflie">
     <include file="$(find crazyflie_driver)/launch/crazyflie_add.launch">
       <arg name="uri" value="$(arg uri)" />
-      <arg name="tf_prefix" value="$(arg tracker_frame)" />
+      <arg name="tf_prefix" value="$(arg robot_frame)" />
       <arg name="enable_logging" value="True" />
     </include>
 

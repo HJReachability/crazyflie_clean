@@ -95,6 +95,38 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Class: rviz/Marker
+      Enabled: false
+      Marker Topic: /vis/lcb
+      Name: LCB
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
+    - Class: rviz/Marker
+      Enabled: false
+      Marker Topic: /vis/ucb
+      Name: UCB
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /vis/mean
+      Name: Mean
+      Namespaces:
+        mean: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: false
+      Marker Topic: /vis/stddev
+      Name: Standard Deviation
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -119,7 +151,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 1.25299
+      Distance: 15.0389
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -131,10 +163,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.0997967
+      Pitch: 0.0247964
       Target Frame: crazyflie
       Value: ThirdPersonFollower (rviz)
-      Yaw: 3.63541
+      Yaw: 0.752251
     Saved: ~
 Window Geometry:
   Displays:
