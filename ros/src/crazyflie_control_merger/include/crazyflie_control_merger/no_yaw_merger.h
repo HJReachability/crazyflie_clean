@@ -89,11 +89,7 @@ private:
   // Timer callback.
   void TimerCallback(const ros::TimerEvent& e);
 
-  // Takeoff service. Set in_flight_ flag to true.
-  bool TakeoffService(std_srvs::Empty::Request& req,
-                      std_srvs::Empty::Response& res);
-
-  // Landing service. Set in_flight_ flag to false.
+  // Landing service. Set in/_flight_ flag to false.
   bool LandService(std_srvs::Empty::Request& req,
                    std_srvs::Empty::Response& res);
 
@@ -121,7 +117,7 @@ private:
   // Mode, either MERGE, LQR, or OPTIMAL.
   Mode mode_;
 
-  // Takeoff and landing services.
+  // Landing service.
   ros::ServiceServer land_srv_;
 
   // Naming and initialization.

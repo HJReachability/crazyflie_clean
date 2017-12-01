@@ -87,7 +87,7 @@ private:
   std::string in_flight_topic_;
   std::string reference_topic_;
 
-  // Takeoff service.
+  // Takeoff and landing services.
   ros::ServiceServer takeoff_srv_;
   bool in_flight_;
 

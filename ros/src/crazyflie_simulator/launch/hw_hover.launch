@@ -4,7 +4,9 @@
   <!-- Topics. -->
   <arg name="reference_topic" default="/ref"/>
   <arg name="state_topic" default="/state"/>
-  <arg name="control_topic" default="/control"/>
+  <arg name="lqr_control_topic" default="/control/lqr"/>
+  <arg name="merged_control_topic" default="/control/merged" />
+  <arg name="optimal_control_topic" default="/control/optimal" />
   <arg name="in_flight_topic" default="/in_flight" />
 
   <!-- Frames of reference. -->
@@ -30,6 +32,10 @@
   <!-- Time steps. -->
   <arg name="simulator_dt" default="0.001" />
   <arg name="estimator_dt" default="0.01" />
+  <arg name="merger_dt" default="0.01" />
+
+  <!-- Merger mode. -->
+  <arg name="merger_mode" default="LQR" />
 
   <!-- Dimensions. -->
   <arg name="x_dim" default="7" />
@@ -76,13 +82,29 @@
 -->
   </group>
 
+  <!-- Merger node. -->
+  <node name="merger"
+        pkg="crazyflie_control_merger"
+        type="no_yaw_merger_node"
+        output="screen">
+
+    <param name="time_step" value="$(arg merger_dt)" />
+    <param name="mode" value="$(arg merger_mode)" />
+
+    <param name="topics/control" value="$(arg lqr_control_topic)" />
+    <param name="topics/prioritized_control" value="$(arg optimal_control_topic)" />
+    <param name="topics/merged" value="$(arg merged_control_topic)" />
+    <param name="topics/in_flight" value="$(arg in_flight_topic)" />
+    <param name="topics/reference" value="$(arg reference_topic)" />
+  </node>
+
   <!-- Converter for custom command velocity messages. -->
   <node name="cmd_vel_converter"
         pkg="crazyflie_control_merger"
         type="cmd_vel_converter_node"
         output="screen">
 
-    <param name="topics/control" value="$(arg control_topic)" />
+    <param name="topics/control" value="$(arg merged_control_topic)" />
     <param name="topics/cmd_vel" value="/$(arg robot_frame)/cmd_vel" />
   </node>
 
@@ -115,7 +137,7 @@
 
     <param name="topics/reference" value="$(arg reference_topic)" />
     <param name="topics/state" value="$(arg state_topic)" />
-    <param name="topics/control" value="$(arg control_topic)" />
+    <param name="topics/control" value="$(arg lqr_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
   </node>
 
@@ -126,7 +148,7 @@
         output="screen">
 
     <param name="topics/reference" value="$(arg reference_topic)" />
-    <param name="topics/control" value="$(arg control_topic)" />
+    <param name="topics/control" value="$(arg merged_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
 
     <param name="hover/x" value="$(arg takeoff_hover_x)" />
