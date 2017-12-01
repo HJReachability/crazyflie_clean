@@ -23,7 +23,7 @@
   <arg name="sim_init_z" default="0.0" />
 
   <!-- Control parameters. -->
-  <arg name="K_file" default="$(find crazyflie_lqr)/references/K_lqr.txt"/>
+  <arg name="K_file" default="$(find crazyflie_lqr)/references/K_manual.txt"/>
   <arg name="u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt"/>
   <arg name="x_ref_file" default="$(find crazyflie_lqr)/references/x_ref_hover.txt"/>
 
@@ -65,6 +65,7 @@
       <arg name="enable_logging" value="True" />
     </include>
 
+<!--
     <node name="joy" pkg="joy" type="joy_node" output="screen">
       <param name="dev" value="$(arg joy_dev)" />
     </node>
@@ -72,6 +73,7 @@
     <node name="joystick_controller" pkg="crazyflie_demo" type="controller.py" output="screen">
       <param name="use_crazyflie_controller" value="True" />
     </node>
+-->
   </group>
 
   <!-- Converter for custom command velocity messages. -->

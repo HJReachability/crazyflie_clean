@@ -113,7 +113,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   ROS_INFO("%s: Takeoff requested.", name_.c_str());
 
   // Lift off, and after a short wait return.
-#if 0
+#if 1
   const ros::Time right_now = ros::Time::now();
   while ((ros::Time::now() - right_now).toSec() < 2.0) {
     crazyflie_msgs::ControlStamped msg;
@@ -133,7 +133,6 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
 #endif
 
   // Send reference to LQR.
-  // HACK! Read this hover point in from the parameter server.
   crazyflie_msgs::PositionStateStamped reference;
   reference.header.stamp = ros::Time::now();
   reference.state.x = hover_point_(0);
