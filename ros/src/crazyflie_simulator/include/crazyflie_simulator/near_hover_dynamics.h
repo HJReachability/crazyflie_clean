@@ -56,7 +56,7 @@ namespace crazyflie_simulator {
 
 class NearHoverDynamics : public ForwardDynamics {
 public:
-  ~NearHoverDynamics() {}
+  virtual ~NearHoverDynamics() {}
   explicit NearHoverDynamics()
     : ForwardDynamics() {}
 

@@ -8,7 +8,6 @@ Panels:
         - /Status1
         - /Grid1
         - /TF1/Frames1
-        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 727
   - Class: rviz/Selection
@@ -95,38 +94,6 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /vis/lcb
-      Name: LCB
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
-    - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /vis/ucb
-      Name: UCB
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /vis/mean
-      Name: Mean
-      Namespaces:
-        mean: true
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: false
-      Marker Topic: /vis/stddev
-      Name: Standard Deviation
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: false
   Enabled: true
   Global Options:
     Background Color: 0; 0; 0
@@ -163,10 +130,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.0247964
+      Pitch: 1.1148
       Target Frame: crazyflie
       Value: ThirdPersonFollower (rviz)
-      Yaw: 0.752251
+      Yaw: 1.68225
     Saved: ~
 Window Geometry:
   Displays:
