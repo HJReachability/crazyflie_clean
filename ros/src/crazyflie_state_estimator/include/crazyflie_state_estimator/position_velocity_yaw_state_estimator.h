@@ -35,73 +35,37 @@
  */
 
 ///////////////////////////////////////////////////////////////////////////////
-//
-// Derived from StateEstimator, for the 7D DubinsState message type.
+///
+// PositionVelocityYawState estimator node. Sets a recurring timer and every
+// time it rings, this node will query tf for the transform between the
+// specified robot frame and the fixed frame, merge it with the previous state
+// estimate, and publish the new estimate.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_state_estimator/dubins_state_estimator.h>
+#ifndef CRAZYFLIE_STATE_ESTIMATOR_POSITION_VELOCITY_YAW_STATE_ESTIMATOR_H
+#define CRAZYFLIE_STATE_ESTIMATOR_POSITION_VELOCITY_YAW_STATE_ESTIMATOR_H
 
-// Register callbacks.
-bool DubinsStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
+#include <crazyflie_state_estimator/state_estimator.h>
+#include <crazyflie_msgs/PositionVelocityYawStateStamped.h>
 
-  // State publisher.
-  state_pub_ = nl.advertise<crazyflie_msgs::DubinsStateStamped>(
-    state_topic_.c_str(), 1, false);
+#include <ros/ros.h>
+#include <math.h>
 
-  return true;
-}
+class PositionVelocityYawStateEstimator : public StateEstimator {
+public:
+  virtual ~PositionVelocityYawStateEstimator() {}
+  explicit PositionVelocityYawStateEstimator()
+    : StateEstimator() {}
 
-// Merge a pose measured at the given time (specified by translation
-// and euler angles) into the current state estimate.
-void DubinsStateEstimator::Update(const Vector3d& translation,
-                                  const Vector3d& euler,
-                                  const ros::Time& stamp) {
-  // Catch first update.
-  if (first_update_) {
-    x_(0) = translation(0);
-    x_(1) = translation(1);
-    x_(2) = translation(2);
+private:
+  // Register callbacks.
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-    x_(3) = 0.0;
-    x_(4) = 0.0;
-    x_(5) = 0.0;
+  // Merge a pose measured at the given time (specified by translation
+  // and euler angles) into the current state estimate.
+  void Update(const Vector3d& translation, const Vector3d& euler,
+              const ros::Time& stamp);
+}; //\class PositionVelocityYawStateEstimator
 
-    x_(6) = euler(2);
-
-    first_update_ = false;
-  } else {
-    // Time difference.
-    const double dt = (stamp - last_time_).toSec();
-
-    // TODO! Use a smoothing filter here instead.
-    // Update velocities.
-    x_(3) = (translation(0) - x_(0)) / dt;
-    x_(4) = (translation(1) - x_(1)) / dt;
-    x_(5) = (translation(2) - x_(2)) / dt;
-
-    // Update position/orientation.
-    x_(0) = translation(0);
-    x_(1) = translation(1);
-    x_(2) = translation(2);
-
-    x_(6) = euler(2);
-  }
-
-  // Publish.
-  crazyflie_msgs::DubinsStateStamped msg;
-
-  msg.header.frame_id = fixed_frame_id_;
-  msg.header.stamp = stamp;
-
-  msg.state.x = x_(0);
-  msg.state.y = x_(1);
-  msg.state.z = x_(2);
-  msg.state.x_dot = x_(3);
-  msg.state.y_dot = x_(4);
-  msg.state.z_dot = x_(5);
-  msg.state.yaw = x_(6);
-
-  state_pub_.publish(msg);
-}
+#endif

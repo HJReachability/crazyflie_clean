@@ -59,7 +59,7 @@
 
 class StateEstimator {
 public:
-  ~StateEstimator() {}
+  virtual ~StateEstimator() {}
 
   // Initialize this class by reading parameters and loading callbacks.
   bool Initialize(const ros::NodeHandle& n);
@@ -75,13 +75,13 @@ protected:
   virtual bool LoadParameters(const ros::NodeHandle& n);
   virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
 
-  // Whenever timer rings, query tf, update state estimate, and publish.
-  void TimerCallback(const ros::TimerEvent& e);
-
   // Merge a pose measured at the given time (specified by translation
   // and euler angles) into the current state estimate.
   virtual void Update(const Vector3d& translation, const Vector3d& euler,
                       const ros::Time& stamp) = 0;
+
+  // Whenever timer rings, query tf, update state estimate, and publish.
+  void TimerCallback(const ros::TimerEvent& e);
 
   // Running state estimate.
   VectorXd x_;

@@ -36,26 +36,67 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The DubinsStateEstimator node.
+// Derived from StateEstimator, for the 6D PositionVelocityState message type.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <ros/ros.h>
-#include <crazyflie_state_estimator/dubins_state_estimator.h>
+#include <crazyflie_state_estimator/position_velocity_state_estimator.h>
 
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "dubins_state_estimator");
-  ros::NodeHandle n("~");
+// Register callbacks.
+bool PositionVelocityStateEstimator::RegisterCallbacks(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
 
-  DubinsStateEstimator state_estimator;
+  // State publisher.
+  state_pub_ = nl.advertise<crazyflie_msgs::PositionVelocityStateStamped>(
+    state_topic_.c_str(), 1, false);
 
-  if (!state_estimator.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize dubins_state_estimator.",
-              ros::this_node::getName().c_str());
-    return EXIT_FAILURE;
+  return true;
+}
+
+// Merge a pose measured at the given time (specified by translation
+// and euler angles) into the current state estimate.
+void PositionVelocityStateEstimator::Update(const Vector3d& translation,
+                                            const Vector3d& euler,
+                                            const ros::Time& stamp) {
+  // Catch first update.
+  if (first_update_) {
+    x_(0) = translation(0);
+    x_(1) = translation(1);
+    x_(2) = translation(2);
+
+    x_(3) = 0.0;
+    x_(4) = 0.0;
+    x_(5) = 0.0;
+
+    first_update_ = false;
+  } else {
+    // Time difference.
+    const double dt = (stamp - last_time_).toSec();
+
+    // TODO! Use a smoothing filter here instead.
+    // Update velocities.
+    x_(3) = (translation(0) - x_(0)) / dt;
+    x_(4) = (translation(1) - x_(1)) / dt;
+    x_(5) = (translation(2) - x_(2)) / dt;
+
+    // Update position/orientation.
+    x_(0) = translation(0);
+    x_(1) = translation(1);
+    x_(2) = translation(2);
   }
 
-  ros::spin();
+  // Publish.
+  crazyflie_msgs::PositionVelocityStateStamped msg;
 
-  return EXIT_SUCCESS;
+  msg.header.frame_id = fixed_frame_id_;
+  msg.header.stamp = stamp;
+
+  msg.state.x = x_(0);
+  msg.state.y = x_(1);
+  msg.state.z = x_(2);
+  msg.state.x_dot = x_(3);
+  msg.state.y_dot = x_(4);
+  msg.state.z_dot = x_(5);
+
+  state_pub_.publish(msg);
 }

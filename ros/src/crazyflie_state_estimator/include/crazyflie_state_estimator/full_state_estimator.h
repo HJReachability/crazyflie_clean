@@ -54,7 +54,7 @@
 
 class FullStateEstimator : public StateEstimator {
 public:
-  ~FullStateEstimator() {}
+  virtual ~FullStateEstimator() {}
   explicit FullStateEstimator()
     : StateEstimator() {}
 
