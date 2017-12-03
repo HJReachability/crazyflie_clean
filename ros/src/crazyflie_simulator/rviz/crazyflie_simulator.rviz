@@ -130,10 +130,10 @@ Visualization Manager:
         Z: 0
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.1148
+      Pitch: 0.1648
       Target Frame: crazyflie
       Value: ThirdPersonFollower (rviz)
-      Yaw: 1.68225
+      Yaw: 1.39725
     Saved: ~
 Window Geometry:
   Displays:

@@ -64,9 +64,6 @@ bool ControlMerger::Initialize(const ros::NodeHandle& n) {
   control_sub_ = nl.subscribe(
     control_topic_.c_str(), 1, &ControlMerger::ControlCallback, this);
 
-  in_flight_sub_ = nl.subscribe(
-    in_flight_topic_.c_str(), 1, &ControlMerger::InFlightCallback, this);
-
   merged_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     merged_topic_.c_str(), 1, false);
 
@@ -82,7 +79,6 @@ bool ControlMerger::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("time_step", dt_)) return false;
 
   // Topics.
-  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
   if (!nl.getParam("topics/control", control_topic_)) return false;
   if (!nl.getParam("topics/prioritized_control", prioritized_control_topic_))
     return false;
@@ -107,11 +103,6 @@ bool ControlMerger::LoadParameters(const ros::NodeHandle& n) {
   }
 
   return true;
-}
-
-// Listen for whether we're in flight or not.
-void ControlMerger::InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
-  in_flight_ = !in_flight_;
 }
 
 // Process an incoming reference point.

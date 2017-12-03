@@ -36,61 +36,77 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class to merge control messages from two different controllers into
-// a single ControlStamped message.
+// Class to provide takeoff service.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_control_merger/no_yaw_merger.h>
+#ifndef CRAZYFLIE_TAKEOFF_TAKEOFF_SERVER_H
+#define CRAZYFLIE_TAKEOFF_TAKEOFF_SERVER_H
 
-namespace crazyflie_control_merger {
+#include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/ControlStamped.h>
+#include <crazyflie_msgs/Control.h>
+#include <crazyflie_msgs/PositionVelocityStateStamped.h>
 
-// Register callbacks.
-bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
+#include <ros/ros.h>
+#include <std_srvs/Empty.h>
+#include <std_msgs/Empty.h>
+#include <math.h>
 
-  // Subscribers.
-  prioritized_control_sub_ = nl.subscribe(
-    prioritized_control_topic_.c_str(), 1, &NoYawMerger::NoYawControlCallback, this);
+namespace crazyflie_takeoff {
 
-  // Timer.
-  timer_ = nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
+class TakeoffServer {
+public:
+  ~TakeoffServer() {}
+  explicit TakeoffServer()
+    : in_flight_(false),
+      initialized_(false) {}
 
-  return true;
-}
+  // Initialize this class.
+  bool Initialize(const ros::NodeHandle& n);
 
-// Process an incoming state measurement.
-void NoYawMerger::NoYawControlCallback(
-  const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg) {
-  no_yaw_control_ = msg->control;
-  prioritized_control_been_updated_ = true;
-}
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-// Timer callback.
-void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
-  crazyflie_msgs::ControlStamped msg;
-  msg.header.stamp = ros::Time::now();
+  // Takeoff service. Set in_flight_ flag to true.
+  bool TakeoffService(std_srvs::Empty::Request& req,
+                      std_srvs::Empty::Response& res);
 
-  if (!control_been_updated_) {
-    return;
-  } else if (!prioritized_control_been_updated_) {
-    msg.control = control_;
-  } else {
-    // Extract no yaw priority.
-    double p = no_yaw_control_.priority;
-    if (mode_ == LQR)
-      p = 0.0;
-    else if (mode_ == PRIORITIZED)
-      p = 1.0;
+  // Takeoff service. Set in_flight_ flag to true.
+  bool LandService(std_srvs::Empty::Request& req,
+                   std_srvs::Empty::Response& res);
 
-    // Set message fields.
-    msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
-    msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
-    msg.control.yaw_dot = control_.yaw_dot;
-    msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
-  }
+  // Timer callback for refreshing landing control signal.
+  void TimerCallback(const ros::TimerEvent& e);
 
-  merged_pub_.publish(msg);
-}
+  // Publishers, subscribers, and topics.
+  ros::Publisher control_pub_;
+  ros::Publisher in_flight_pub_;
+  ros::Publisher reference_pub_;
 
-} //\namespace crazyflie_control_merger
+  std::string control_topic_;
+  std::string in_flight_topic_;
+  std::string reference_topic_;
+
+  // Takeoff and landing services.
+  ros::ServiceServer takeoff_srv_;
+  ros::ServiceServer land_srv_;
+  bool in_flight_;
+
+  // Timer for refreshing landing control signal.
+  ros::Timer timer_;
+
+  // Initial hover point.
+  Vector3d hover_point_;
+
+  // Naming and initialization.
+  bool initialized_;
+  std::string name_;
+}; //\class TakeoffServer
+
+} //\crazyflie_takeoff
+
+#endif

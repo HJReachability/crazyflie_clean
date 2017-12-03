@@ -36,21 +36,21 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The Takeoff node.
+// The TakeoffServer node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ros/ros.h>
-#include <crazyflie_control_merger/takeoff.h>
+#include <crazyflie_takeoff/takeoff_server.h>
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "takeoff");
+  ros::init(argc, argv, "takeoff_server");
   ros::NodeHandle n("~");
 
-  crazyflie_control_merger::Takeoff takeoff;
+  crazyflie_takeoff::TakeoffServer takeoff;
 
   if (!takeoff.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize takeoff.",
+    ROS_ERROR("%s: Failed to initialize takeoff_server.",
               ros::this_node::getName().c_str());
     return EXIT_FAILURE;
   }

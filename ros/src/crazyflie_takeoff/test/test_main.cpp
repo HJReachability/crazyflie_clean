@@ -36,74 +36,13 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class to provide takeoff service.
+// Unit tests for this package.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_CONTROL_MERGER_TAKEOFF_H
-#define CRAZYFLIE_CONTROL_MERGER_TAKEOFF_H
+#include <gtest/gtest.h>
 
-#include <crazyflie_utils/types.h>
-#include <crazyflie_utils/angles.h>
-#include <crazyflie_msgs/ControlStamped.h>
-#include <crazyflie_msgs/Control.h>
-#include <crazyflie_msgs/NoYawControlStamped.h>
-#include <crazyflie_msgs/NoYawControl.h>
-#include <crazyflie_msgs/PositionStateStamped.h>
-
-#include <ros/ros.h>
-#include <std_srvs/Empty.h>
-#include <std_msgs/Empty.h>
-#include <math.h>
-#include <fstream>
-
-namespace crazyflie_control_merger {
-
-class Takeoff {
-public:
-  ~Takeoff() {}
-  explicit Takeoff()
-    : in_flight_(false),
-      initialized_(false) {}
-
-  // Initialize this class.
-  bool Initialize(const ros::NodeHandle& n);
-
-private:
-  // Load parameters and register callbacks.
-  bool LoadParameters(const ros::NodeHandle& n);
-  bool RegisterCallbacks(const ros::NodeHandle& n);
-
-  // Takeoff service. Set in_flight_ flag to true.
-  bool TakeoffService(std_srvs::Empty::Request& req,
-                      std_srvs::Empty::Response& res);
-
-  // Takeoff service. Set in_flight_ flag to true.
-  bool LandService(std_srvs::Empty::Request& req,
-                   std_srvs::Empty::Response& res);
-
-  // Publishers, subscribers, and topics.
-  ros::Publisher control_pub_;
-  ros::Publisher in_flight_pub_;
-  ros::Publisher reference_pub_;
-
-  std::string control_topic_;
-  std::string in_flight_topic_;
-  std::string reference_topic_;
-
-  // Takeoff and landing services.
-  ros::ServiceServer takeoff_srv_;
-  ros::ServiceServer land_srv_;
-  bool in_flight_;
-
-  // Initial hover point.
-  Vector3d hover_point_;
-
-  // Naming and initialization.
-  bool initialized_;
-  std::string name_;
-}; //\class Takeoff
-
-} //\crazyflie_control_merger
-
-#endif
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

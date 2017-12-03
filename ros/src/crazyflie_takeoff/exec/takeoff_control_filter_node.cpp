@@ -36,61 +36,26 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class to merge control messages from two different controllers into
-// a single ControlStamped message.
+// The TakeoffControlFilter node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_control_merger/no_yaw_merger.h>
+#include <ros/ros.h>
+#include <crazyflie_takeoff/takeoff_control_filter.h>
 
-namespace crazyflie_control_merger {
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "takeoff_control_filter");
+  ros::NodeHandle n("~");
 
-// Register callbacks.
-bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
+  crazyflie_takeoff::TakeoffControlFilter takeoff;
 
-  // Subscribers.
-  prioritized_control_sub_ = nl.subscribe(
-    prioritized_control_topic_.c_str(), 1, &NoYawMerger::NoYawControlCallback, this);
-
-  // Timer.
-  timer_ = nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
-
-  return true;
-}
-
-// Process an incoming state measurement.
-void NoYawMerger::NoYawControlCallback(
-  const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg) {
-  no_yaw_control_ = msg->control;
-  prioritized_control_been_updated_ = true;
-}
-
-// Timer callback.
-void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
-  crazyflie_msgs::ControlStamped msg;
-  msg.header.stamp = ros::Time::now();
-
-  if (!control_been_updated_) {
-    return;
-  } else if (!prioritized_control_been_updated_) {
-    msg.control = control_;
-  } else {
-    // Extract no yaw priority.
-    double p = no_yaw_control_.priority;
-    if (mode_ == LQR)
-      p = 0.0;
-    else if (mode_ == PRIORITIZED)
-      p = 1.0;
-
-    // Set message fields.
-    msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
-    msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
-    msg.control.yaw_dot = control_.yaw_dot;
-    msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
+  if (!takeoff.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize takeoff_control_filter.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
   }
 
-  merged_pub_.publish(msg);
-}
+  ros::spin();
 
-} //\namespace crazyflie_control_merger
+  return EXIT_SUCCESS;
+}

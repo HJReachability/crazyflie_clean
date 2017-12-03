@@ -36,17 +36,17 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class to handle takeoff service.
+// Class to handle takeoff and landing services.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_control_merger/takeoff.h>
+#include <crazyflie_takeoff/takeoff_server.h>
 
-namespace crazyflie_control_merger {
+namespace crazyflie_takeoff {
 
 // Initialize this node.
-bool Takeoff::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "takeoff");
+bool TakeoffServer::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "takeoff_server");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -63,7 +63,7 @@ bool Takeoff::Initialize(const ros::NodeHandle& n) {
 }
 
 // Load parameters.
-bool Takeoff::LoadParameters(const ros::NodeHandle& n) {
+bool TakeoffServer::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Topics.
@@ -82,14 +82,14 @@ bool Takeoff::LoadParameters(const ros::NodeHandle& n) {
 }
 
 // Register callbacks.
-bool Takeoff::RegisterCallbacks(const ros::NodeHandle& n) {
+bool TakeoffServer::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Publishers.
   control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
     control_topic_.c_str(), 10, false);
 
-  reference_pub_ = nl.advertise<crazyflie_msgs::PositionStateStamped>(
+  reference_pub_ = nl.advertise<crazyflie_msgs::PositionVelocityStateStamped>(
     reference_topic_.c_str(), 10, false);
 
   in_flight_pub_ = nl.advertise<std_msgs::Empty>(
@@ -97,18 +97,43 @@ bool Takeoff::RegisterCallbacks(const ros::NodeHandle& n) {
 
   // Services.
   takeoff_srv_ =
-    nl.advertiseService("/takeoff", &Takeoff::TakeoffService, this);
+    nl.advertiseService("/takeoff", &TakeoffServer::TakeoffService, this);
 
-  land_srv_ = nl.advertiseService("/land", &Takeoff::LandService, this);
+  land_srv_ = nl.advertiseService("/land", &TakeoffServer::LandService, this);
+
+  // Timer.
+  timer_ =  nl.createTimer(ros::Duration(0.1), &TakeoffServer::TimerCallback, this);
 
   return true;
 }
 
+// Timer callback for refreshing landing control signal.
+void TakeoffServer::TimerCallback(const ros::TimerEvent& e) {
+  // If in flight, then no need to resend landing signal.
+  if (in_flight_)
+    return;
+
+  // Send a zero thrust signal.
+  crazyflie_msgs::ControlStamped msg;
+  msg.header.stamp = ros::Time::now();
+
+  msg.control.roll = 0.0;
+  msg.control.pitch = 0.0;
+  msg.control.yaw_dot = 0.0;
+  msg.control.thrust = 0.0;
+
+  control_pub_.publish(msg);
+}
+
 // Landing service.
-bool Takeoff::
+bool TakeoffServer::
 LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   ROS_INFO("%s: Landing requested.", name_.c_str());
 
+  // Let other nodes know that we are not in flight anymore.
+  in_flight_pub_.publish(std_msgs::Empty());
+
+  // Slowly spin the rotors down.
   const ros::Time right_now = ros::Time::now();
   while ((ros::Time::now() - right_now).toSec() < 1.0) {
     crazyflie_msgs::ControlStamped msg;
@@ -130,16 +155,12 @@ LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
 
   in_flight_ = false;
 
-  // Send the in_flight signal to all other nodes!
-  in_flight_pub_.publish(std_msgs::Empty());
-
   // Return true.
   return true;
 }
 
-
 // Takeoff service. Set in_flight_ flag to true.
-bool Takeoff::
+bool TakeoffServer::
 TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   if (in_flight_) {
     ROS_WARN("%s: Tried to takeoff while in flight.", name_.c_str());
@@ -167,7 +188,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   }
 
   // Send reference to LQR (which is hopefully running...).
-  crazyflie_msgs::PositionStateStamped reference;
+  crazyflie_msgs::PositionVelocityStateStamped reference;
   reference.header.stamp = ros::Time::now();
   reference.state.x = hover_point_(0);
   reference.state.y = hover_point_(1);
@@ -189,4 +210,4 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   return true;
 }
 
-} //\namespace crazyflie_control_merger
+} //\namespace crazyflie_takeoff

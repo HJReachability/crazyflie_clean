@@ -36,61 +36,73 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class to merge control messages from two different controllers into
-// a single ControlStamped message.
+// Class to filter control messages coming from the takeoff server from other
+// sources of control signals so that the takeoff server takes precedence.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_control_merger/no_yaw_merger.h>
+#ifndef CRAZYFLIE_TAKEOFF_TAKEOFF_CONTROL_FILTER_H
+#define CRAZYFLIE_TAKEOFF_TAKEOFF_CONTROL_FILTER_H
 
-namespace crazyflie_control_merger {
+#include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/ControlStamped.h>
 
-// Register callbacks.
-bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
+#include <ros/ros.h>
+#include <std_msgs/Empty.h>
 
-  // Subscribers.
-  prioritized_control_sub_ = nl.subscribe(
-    prioritized_control_topic_.c_str(), 1, &NoYawMerger::NoYawControlCallback, this);
+namespace crazyflie_takeoff {
 
-  // Timer.
-  timer_ = nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
+class TakeoffControlFilter {
+public:
+  ~TakeoffControlFilter() {}
+  explicit TakeoffControlFilter()
+    : in_flight_(false),
+      received_takeoff_control_(false),
+      initialized_(false) {}
 
-  return true;
-}
+  // Initialize this class.
+  bool Initialize(const ros::NodeHandle& n);
 
-// Process an incoming state measurement.
-void NoYawMerger::NoYawControlCallback(
-  const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg) {
-  no_yaw_control_ = msg->control;
-  prioritized_control_been_updated_ = true;
-}
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-// Timer callback.
-void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
-  crazyflie_msgs::ControlStamped msg;
-  msg.header.stamp = ros::Time::now();
+  // Callback for takeoff server controls.
+  void TakeoffControlCallback(
+    const crazyflie_msgs::ControlStamped::ConstPtr& msg);
 
-  if (!control_been_updated_) {
-    return;
-  } else if (!prioritized_control_been_updated_) {
-    msg.control = control_;
-  } else {
-    // Extract no yaw priority.
-    double p = no_yaw_control_.priority;
-    if (mode_ == LQR)
-      p = 0.0;
-    else if (mode_ == PRIORITIZED)
-      p = 1.0;
+  // Callback for commanded controls.
+  void CommandedControlCallback(
+    const crazyflie_msgs::ControlStamped::ConstPtr& msg);
 
-    // Set message fields.
-    msg.control.roll = (1.0 - p) * control_.roll + p * no_yaw_control_.roll;
-    msg.control.pitch = (1.0 - p) * control_.pitch + p * no_yaw_control_.pitch;
-    msg.control.yaw_dot = control_.yaw_dot;
-    msg.control.thrust = (1.0 - p) * control_.thrust + p * no_yaw_control_.thrust;
-  }
+  // In flight signal callback.
+  void InFlightCallback(const std_msgs::Empty::ConstPtr& msg);
 
-  merged_pub_.publish(msg);
-}
+  // Most recent takeoff control.
+  crazyflie_msgs::ControlStamped takeoff_control_;
+  bool received_takeoff_control_;
 
-} //\namespace crazyflie_control_merger
+  // Publishers, subscribers, and topics.
+  ros::Publisher final_control_pub_;
+  ros::Subscriber takeoff_control_sub_;
+  ros::Subscriber commanded_control_sub_;
+  ros::Subscriber in_flight_sub_;
+
+  std::string final_control_topic_;
+  std::string takeoff_control_topic_;
+  std::string commanded_control_topic_;
+  std::string in_flight_topic_;
+
+  // Are we currently in flight?
+  bool in_flight_;
+
+  // Naming and initialization.
+  bool initialized_;
+  std::string name_;
+}; //\class TakeoffControlFilter
+
+} //\crazyflie_takeoff
+
+#endif

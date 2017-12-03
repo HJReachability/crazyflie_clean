@@ -60,7 +60,6 @@ public:
   explicit ControlMerger()
     : control_been_updated_(false),
       prioritized_control_been_updated_(false),
-      in_flight_(false),
       initialized_(false) {}
 
   // Initialize this class.
@@ -72,9 +71,6 @@ protected:
   // Load parameters and register callbacks.
   virtual bool LoadParameters(const ros::NodeHandle& n);
   virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
-
-  // Listen for whether we're in flight or not.
-  void InFlightCallback(const std_msgs::Empty::ConstPtr& msg);
 
   // Process an incoming reference point.
   void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
@@ -97,18 +93,13 @@ protected:
   ros::Publisher merged_pub_;
   ros::Subscriber control_sub_;
   ros::Subscriber prioritized_control_sub_;
-  ros::Subscriber in_flight_sub_;
 
   std::string merged_topic_;
   std::string control_topic_;
   std::string prioritized_control_topic_;
-  std::string in_flight_topic_;
 
   // Mode, either MERGE, LQR, or PRIORITIZED.
   Mode mode_;
-
-  // Are we in flight or not?
-  bool in_flight_;
 
   // Naming and initialization.
   bool initialized_;
