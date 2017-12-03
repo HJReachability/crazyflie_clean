@@ -56,11 +56,9 @@
 
 class FullStateLqr : public LinearFeedbackController {
 public:
-  ~FullStateLqr() {}
+  virtual ~FullStateLqr() {}
   explicit FullStateLqr()
     : LinearFeedbackController() {}
-
-  bool Initialize(const ros::NodeHandle& n);
 
 private:
   // Register callbacks.

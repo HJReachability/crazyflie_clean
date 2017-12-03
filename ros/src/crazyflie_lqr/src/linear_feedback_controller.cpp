@@ -43,6 +43,35 @@
 
 #include <crazyflie_lqr/linear_feedback_controller.h>
 
+// Initialize.
+bool LinearFeedbackController::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "crazyflie_lqr");
+
+  if (!LoadParameters(n)) {
+    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
+    return false;
+  }
+
+  if (!RegisterCallbacks(n)) {
+    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
+    return false;
+  }
+
+  // Load K, x_ref, u_ref from disk.
+  if (!LoadFromDisk()) {
+    ROS_ERROR("%s: Failed to load K, x_ref, u_ref from disk.", name_.c_str());
+    return false;
+  }
+
+  // Set up control publisher.
+  ros::NodeHandle nl(n);
+  control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
+    control_topic_.c_str(), 1, false);
+
+  initialized_ = true;
+  return true;
+}
+
 // Load K, x_ref, u_ref from disk.
 bool LinearFeedbackController::LoadFromDisk() {
   // Set up file io to read K, x_ref, and u_ref from disk.

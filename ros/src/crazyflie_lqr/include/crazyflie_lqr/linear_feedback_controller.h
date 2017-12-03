@@ -46,6 +46,7 @@
 
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/ControlStamped.h>
 
 #include <ros/ros.h>
 #include <std_msgs/Empty.h>
@@ -57,7 +58,7 @@ public:
   virtual ~LinearFeedbackController() {}
 
   // Initialize this class by reading parameters and loading callbacks.
-  virtual bool Initialize(const ros::NodeHandle& n) = 0;
+  virtual bool Initialize(const ros::NodeHandle& n);
 
   // Compute control given the current state.
   virtual VectorXd Control(const VectorXd& x) const;
@@ -71,9 +72,6 @@ protected:
   // by derived classes.
   virtual bool LoadParameters(const ros::NodeHandle& n);
   virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
-
-  // Load K, x_ref, u_ref from disk.
-  bool LoadFromDisk();
 
   // K matrix and reference state/control (to fight gravity). These are
   // hard-coded since they will not change.
@@ -101,6 +99,10 @@ protected:
   bool received_reference_;
   bool initialized_;
   std::string name_;
+
+private:
+  // Load K, x_ref, u_ref from disk.
+  bool LoadFromDisk();
 }; //\class LinearFeedbackController
 
 #endif

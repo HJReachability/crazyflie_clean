@@ -31,49 +31,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * Please contact the author(s) of this library if you have any questions.
- * Authors: David Fridovich-Keil    ( dfk@eecs.berkeley.edu )
- *          Jaime Fernandez Fisac   ( jfisac@eecs.berkeley.edu )
+ * Authors: David Fridovich-Keil   ( dfk@eecs.berkeley.edu )
  */
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LQR hover controller for the Crazyflie. Assumes that the state space is
-// given by the DubinsStateStamped message type, which is a 7D model but the
-// reference is only a 6D PositionStateStamped message type (appends zero yaw).
+// The PositionVelocityYawStateLiftLqr node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_DUBINS_STATE_LIFT_LQR_H
-#define CRAZYFLIE_LQR_DUBINS_STATE_LIFT_LQR_H
-
-#include <crazyflie_lqr/linear_feedback_controller.h>
-#include <crazyflie_utils/types.h>
-#include <crazyflie_utils/angles.h>
-#include <crazyflie_msgs/DubinsStateStamped.h>
-#include <crazyflie_msgs/PositionStateStamped.h>
-#include <crazyflie_msgs/ControlStamped.h>
-
 #include <ros/ros.h>
-#include <math.h>
-#include <fstream>
+#include <crazyflie_lqr/position_velocity_yaw_state_lift_lqr.h>
 
-class DubinsStateLiftLqr : public LinearFeedbackController {
-public:
-  ~DubinsStateLiftLqr() {}
-  explicit DubinsStateLiftLqr()
-    : LinearFeedbackController() {}
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "position_velocity_yaw_state_lift_lqr");
+  ros::NodeHandle n("~");
 
-  bool Initialize(const ros::NodeHandle& n);
+  PositionVelocityYawStateLiftLqr lqr;
 
-private:
-  // Register callbacks.
-  bool RegisterCallbacks(const ros::NodeHandle& n);
+  if (!lqr.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize position_velocity_yaw_state_lift_lqr.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
+  }
 
-  // Process an incoming reference point.
-  void ReferenceCallback(const crazyflie_msgs::PositionStateStamped::ConstPtr& msg);
+  ros::spin();
 
-  // Process an incoming state measurement.
-  void StateCallback(const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg);
-}; //\class DubinsStateLiftLqr
-
-#endif
+  return EXIT_SUCCESS;
+}

@@ -78,6 +78,10 @@ private:
   bool TakeoffService(std_srvs::Empty::Request& req,
                       std_srvs::Empty::Response& res);
 
+  // Takeoff service. Set in_flight_ flag to true.
+  bool LandService(std_srvs::Empty::Request& req,
+                   std_srvs::Empty::Response& res);
+
   // Publishers, subscribers, and topics.
   ros::Publisher control_pub_;
   ros::Publisher in_flight_pub_;
@@ -89,6 +93,7 @@ private:
 
   // Takeoff and landing services.
   ros::ServiceServer takeoff_srv_;
+  ros::ServiceServer land_srv_;
   bool in_flight_;
 
   // Initial hover point.

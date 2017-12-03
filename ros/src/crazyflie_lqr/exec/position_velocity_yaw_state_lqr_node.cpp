@@ -36,21 +36,21 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The DubinsStateLqr node.
+// The PositionVelocityYawStateLqr node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
 #include <ros/ros.h>
-#include <crazyflie_lqr/dubins_state_lqr.h>
+#include <crazyflie_lqr/position_velocity_yaw_state_lqr.h>
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "dubins_state_lqr");
+  ros::init(argc, argv, "position_velocity_yaw_state_lqr");
   ros::NodeHandle n("~");
 
-  DubinsStateLqr lqr;
+  PositionVelocityYawStateLqr lqr;
 
   if (!lqr.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize dubins_state_lqr.",
+    ROS_ERROR("%s: Failed to initialize position_velocity_yaw_state_lqr.",
               ros::this_node::getName().c_str());
     return EXIT_FAILURE;
   }

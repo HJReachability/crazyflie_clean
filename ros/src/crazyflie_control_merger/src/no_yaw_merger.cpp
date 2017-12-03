@@ -45,78 +45,13 @@
 
 namespace crazyflie_control_merger {
 
-// Initialize this node.
-bool NoYawMerger::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "no_yaw_merger");
-
-  if (!LoadParameters(n)) {
-    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
-    return false;
-  }
-
-  if (!RegisterCallbacks(n)) {
-    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
-    return false;
-  }
-
-  // Delay a little while just to make sure other nodes are started up.
-  //  ros::Duration(0.5).sleep();
-
-  initialized_ = true;
-  return true;
-}
-
-// Load parameters.
-bool NoYawMerger::LoadParameters(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
-
-  // Time step.
-  if (!nl.getParam("time_step", dt_)) return false;
-
-  // Topics.
-  if (!nl.getParam("topics/control", control_topic_)) return false;
-  if (!nl.getParam("topics/prioritized_control", no_yaw_control_topic_))
-    return false;
-  if (!nl.getParam("topics/merged", merged_topic_)) return false;
-
-  // Mode.
-  std::string mode;
-  if (!nl.getParam("mode", mode)) return false;
-
-  if (mode == "MERGE") {
-    mode_ = MERGE;
-    ROS_INFO("%s: Entering MERGE mode.", name_.c_str());
-  } else if (mode == "LQR") {
-    mode_ = LQR;
-    ROS_INFO("%s: Entering LQR mode.", name_.c_str());
-  } else if (mode == "OPTIMAL") {
-    mode_ = OPTIMAL;
-    ROS_INFO("%s: Entering OPTIMAL mode.", name_.c_str());
-  } else {
-    ROS_ERROR("%s: Invalid mode. Using LQR.", name_.c_str());
-    mode_ = LQR;
-  }
-
-  return true;
-}
-
 // Register callbacks.
 bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Subscribers.
-  control_sub_ = nl.subscribe(
-    control_topic_.c_str(), 1, &NoYawMerger::ControlCallback, this);
-
-  no_yaw_control_sub_ = nl.subscribe(
-    no_yaw_control_topic_.c_str(), 1, &NoYawMerger::NoYawControlCallback, this);
-
-  // Publishers.
-  merged_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
-    merged_topic_.c_str(), 1, false);
-
-    // Services.
-  land_srv_ = nl.advertiseService("/land", &NoYawMerger::LandService, this);
+  prioritized_control_sub_ = nl.subscribe(
+    prioritized_control_topic_.c_str(), 1, &NoYawMerger::NoYawControlCallback, this);
 
   // Timer.
   timer_ = nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
@@ -124,39 +59,28 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
   return true;
 }
 
-// Process an incoming reference point.
-void NoYawMerger::ControlCallback(
-  const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
-  control_ = msg->control;
-  control_been_updated_ = true;
-}
-
 // Process an incoming state measurement.
 void NoYawMerger::NoYawControlCallback(
   const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg) {
   no_yaw_control_ = msg->control;
-  no_yaw_control_been_updated_ = true;
+  prioritized_control_been_updated_ = true;
 }
 
 // Timer callback.
 void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
-  if (landed_)
-    return;
-
   crazyflie_msgs::ControlStamped msg;
   msg.header.stamp = ros::Time::now();
 
-  if (!control_been_updated_) {
-    // Takeoff node may be operating.. just return.
+  if (!control_been_updated_ || !in_flight_) {
     return;
-  } else if (!no_yaw_control_been_updated_) {
+  } else if (!prioritized_control_been_updated_) {
     msg.control = control_;
   } else {
     // Extract no yaw priority.
     double p = no_yaw_control_.priority;
     if (mode_ == LQR)
       p = 0.0;
-    else if (mode_ == OPTIMAL)
+    else if (mode_ == PRIORITIZED)
       p = 1.0;
 
     // Set message fields.
@@ -167,36 +91,6 @@ void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
   }
 
   merged_pub_.publish(msg);
-}
-
-// Landing service.
-bool NoYawMerger::
-LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
-  ROS_INFO("%s: Landing requested.", name_.c_str());
-
-  const ros::Time right_now = ros::Time::now();
-  while ((ros::Time::now() - right_now).toSec() < 1.0) {
-    crazyflie_msgs::ControlStamped msg;
-    msg.header.stamp = ros::Time::now();
-
-    msg.control.roll = 0.0;
-    msg.control.pitch = 0.0;
-    msg.control.yaw_dot = 0.0;
-
-    // Slowly decrement thrust.
-    msg.control.thrust = std::max(0.0, crazyflie_utils::constants::G -
-                                  5.0 * (ros::Time::now() - right_now).toSec());
-
-    merged_pub_.publish(msg);
-
-    // Sleep a little, then rerun the loop.
-    ros::Duration(0.01).sleep();
-  }
-
-  landed_ = true;
-
-  // Return true.
-  return true;
 }
 
 } //\namespace crazyflie_control_merger

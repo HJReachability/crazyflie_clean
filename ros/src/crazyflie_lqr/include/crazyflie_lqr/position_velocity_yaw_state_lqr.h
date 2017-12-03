@@ -36,44 +36,41 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class to merge control messages from two different controllers into
-// a single ControlStamped message.
+// LQR hover controller for the Crazyflie. Assumes that the state space is
+// given by the PositionVelocityYawStateStamped message type, which is a 7D
+// model.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_CONTROL_MERGER_NO_YAW_MERGER_H
-#define CRAZYFLIE_CONTROL_MERGER_NO_YAW_MERGER_H
+#ifndef CRAZYFLIE_LQR_POSITION_VELOCITY_YAW_STATE_LQR_H
+#define CRAZYFLIE_LQR_POSITION_VELOCITY_YAW_STATE_LQR_H
 
-#include <crazyflie_control_merger/control_merger.h>
-#include <crazyflie_msgs/NoYawControlStamped.h>
-#include <crazyflie_msgs/NoYawControl.h>
+#include <crazyflie_lqr/linear_feedback_controller.h>
+#include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/PositionVelocityYawStateStamped.h>
 
 #include <ros/ros.h>
 #include <math.h>
+#include <fstream>
 
-namespace crazyflie_control_merger {
-
-class NoYawMerger : public ControlMerger {
+class PositionVelocityYawStateLqr : public LinearFeedbackController {
 public:
-  virtual ~NoYawMerger() {}
-  explicit NoYawMerger()
-    : ControlMerger() {}
+  virtual ~PositionVelocityYawStateLqr() {}
+  explicit PositionVelocityYawStateLqr()
+    : LinearFeedbackController() {}
 
 private:
   // Register callbacks.
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
+  // Process an incoming reference point.
+  void ReferenceCallback(
+    const crazyflie_msgs::PositionVelocityYawStateStamped::ConstPtr& msg);
+
   // Process an incoming state measurement.
-  void NoYawControlCallback(
-    const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg);
-
-  // Timer callback.
-  void TimerCallback(const ros::TimerEvent& e);
-
-  // Most recent priortized control signal.
-  crazyflie_msgs::NoYawControl no_yaw_control_;
-}; //\class NoYawMerger
-
-} //\crazyflie_control_merger
+  void StateCallback(
+    const crazyflie_msgs::PositionVelocityYawStateStamped::ConstPtr& msg);
+}; //\class PositionVelocityYawStateLqr
 
 #endif

@@ -31,31 +31,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  * Please contact the author(s) of this library if you have any questions.
- * Authors: David Fridovich-Keil   ( dfk@eecs.berkeley.edu )
+ * Authors: David Fridovich-Keil    ( dfk@eecs.berkeley.edu )
+ *          Jaime Fernandez Fisac   ( jfisac@eecs.berkeley.edu )
  */
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// The DubinsStateLqr node.
+// LQR hover controller for the Crazyflie. Assumes that the state space is
+// given by the PositionVelocityYawStateStamped message type, which is a 7D model but the
+// reference is only a 6D PositionStateStamped message type (appends zero yaw).
 //
 ///////////////////////////////////////////////////////////////////////////////
 
+#ifndef CRAZYFLIE_LQR_POSITION_VELOCITY_YAW_STATE_LIFT_LQR_H
+#define CRAZYFLIE_LQR_POSITION_VELOCITY_YAW_STATE_LIFT_LQR_H
+
+#include <crazyflie_lqr/linear_feedback_controller.h>
+#include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/PositionVelocityYawStateStamped.h>
+#include <crazyflie_msgs/PositionVelocityStateStamped.h>
+
 #include <ros/ros.h>
-#include <crazyflie_lqr/dubins_state_lift_lqr.h>
+#include <math.h>
+#include <fstream>
 
-int main(int argc, char** argv) {
-  ros::init(argc, argv, "dubins_state_lift_lqr");
-  ros::NodeHandle n("~");
+class PositionVelocityYawStateLiftLqr : public LinearFeedbackController {
+public:
+  virtual ~PositionVelocityYawStateLiftLqr() {}
+  explicit PositionVelocityYawStateLiftLqr()
+    : LinearFeedbackController() {}
 
-  DubinsStateLiftLqr lqr;
+private:
+  // Register callbacks.
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  if (!lqr.Initialize(n)) {
-    ROS_ERROR("%s: Failed to initialize dubins_state_lift_lqr.",
-              ros::this_node::getName().c_str());
-    return EXIT_FAILURE;
-  }
+  // Process an incoming reference point.
+  void ReferenceCallback(
+    const crazyflie_msgs::PositionVelocityStateStamped::ConstPtr& msg);
 
-  ros::spin();
+  // Process an incoming state measurement.
+  void StateCallback(
+    const crazyflie_msgs::PositionVelocityYawStateStamped::ConstPtr& msg);
+}; //\class PositionVelocityYawStateLiftLqr
 
-  return EXIT_SUCCESS;
-}
+#endif

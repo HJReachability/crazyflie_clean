@@ -96,11 +96,47 @@ bool Takeoff::RegisterCallbacks(const ros::NodeHandle& n) {
     in_flight_topic_.c_str(), 10, false);
 
   // Services.
-  takeoff_srv_ = nl.advertiseService(
-    "/takeoff", &Takeoff::TakeoffService, this);
+  takeoff_srv_ =
+    nl.advertiseService("/takeoff", &Takeoff::TakeoffService, this);
+
+  land_srv_ = nl.advertiseService("/land", &Takeoff::LandService, this);
 
   return true;
 }
+
+// Landing service.
+bool Takeoff::
+LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
+  ROS_INFO("%s: Landing requested.", name_.c_str());
+
+  const ros::Time right_now = ros::Time::now();
+  while ((ros::Time::now() - right_now).toSec() < 1.0) {
+    crazyflie_msgs::ControlStamped msg;
+    msg.header.stamp = ros::Time::now();
+
+    msg.control.roll = 0.0;
+    msg.control.pitch = 0.0;
+    msg.control.yaw_dot = 0.0;
+
+    // Slowly decrement thrust.
+    msg.control.thrust = std::max(0.0, crazyflie_utils::constants::G -
+                                  5.0 * (ros::Time::now() - right_now).toSec());
+
+    control_pub_.publish(msg);
+
+    // Sleep a little, then rerun the loop.
+    ros::Duration(0.01).sleep();
+  }
+
+  in_flight_ = false;
+
+  // Send the in_flight signal to all other nodes!
+  in_flight_pub_.publish(std_msgs::Empty());
+
+  // Return true.
+  return true;
+}
+
 
 // Takeoff service. Set in_flight_ flag to true.
 bool Takeoff::
@@ -113,9 +149,8 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   ROS_INFO("%s: Takeoff requested.", name_.c_str());
 
   // Lift off, and after a short wait return.
-#if 1
   const ros::Time right_now = ros::Time::now();
-  while ((ros::Time::now() - right_now).toSec() < 2.0) {
+  while ((ros::Time::now() - right_now).toSec() < 1.0) {
     crazyflie_msgs::ControlStamped msg;
     msg.header.stamp = ros::Time::now();
 
@@ -130,9 +165,8 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
     // Sleep a little, then rerun the loop.
     ros::Duration(0.01).sleep();
   }
-#endif
 
-  // Send reference to LQR.
+  // Send reference to LQR (which is hopefully running...).
   crazyflie_msgs::PositionStateStamped reference;
   reference.header.stamp = ros::Time::now();
   reference.state.x = hover_point_(0);
@@ -144,10 +178,9 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
 
   reference_pub_.publish(reference);
 
-  in_flight_ = true;
-
   // Give LQR time to get there.
   ros::Duration(10.0).sleep();
+  in_flight_ = true;
 
   // Send the in_flight signal to all other nodes!
   in_flight_pub_.publish(std_msgs::Empty());

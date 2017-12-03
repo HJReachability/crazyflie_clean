@@ -36,17 +36,18 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Class to convert ControlStamped messages to Twists and publish on /cmd_vel.
+// Base class to merge control messages from two different controllers into
+// a single ControlStamped message.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_control_merger/cmd_vel_converter.h>
+#include <crazyflie_control_merger/control_merger.h>
 
 namespace crazyflie_control_merger {
 
 // Initialize this node.
-bool CmdVelConverter::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "cmd_vel_converter");
+bool ControlMerger::Initialize(const ros::NodeHandle& n) {
+  name_ = ros::names::append(n.getNamespace(), "control_merger");
 
   if (!LoadParameters(n)) {
     ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
@@ -58,50 +59,66 @@ bool CmdVelConverter::Initialize(const ros::NodeHandle& n) {
     return false;
   }
 
+  // Register extra callbacks for this base class.
+  ros::NodeHandle nl(n);
+  control_sub_ = nl.subscribe(
+    control_topic_.c_str(), 1, &ControlMerger::ControlCallback, this);
+
+  in_flight_sub_ = nl.subscribe(
+    in_flight_topic_.c_str(), 1, &ControlMerger::InFlightCallback, this);
+
+  merged_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
+    merged_topic_.c_str(), 1, false);
+
   initialized_ = true;
   return true;
 }
 
 // Load parameters.
-bool CmdVelConverter::LoadParameters(const ros::NodeHandle& n) {
+bool ControlMerger::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
+
+  // Time step.
+  if (!nl.getParam("time_step", dt_)) return false;
 
   // Topics.
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
   if (!nl.getParam("topics/control", control_topic_)) return false;
-  if (!nl.getParam("topics/cmd_vel", cmd_vel_topic_)) return false;
+  if (!nl.getParam("topics/prioritized_control", prioritized_control_topic_))
+    return false;
+  if (!nl.getParam("topics/merged", merged_topic_)) return false;
+
+  // Mode.
+  std::string mode;
+  if (!nl.getParam("mode", mode)) return false;
+
+  if (mode == "MERGE") {
+    mode_ = MERGE;
+    ROS_INFO("%s: Entering MERGE mode.", name_.c_str());
+  } else if (mode == "LQR") {
+    mode_ = LQR;
+    ROS_INFO("%s: Entering LQR mode.", name_.c_str());
+  } else if (mode == "PRIORITIZED") {
+    mode_ = PRIORITIZED;
+    ROS_INFO("%s: Entering PRIORITIZED mode.", name_.c_str());
+  } else {
+    ROS_ERROR("%s: Invalid mode. Using LQR.", name_.c_str());
+    mode_ = LQR;
+  }
 
   return true;
 }
 
-// Register callbacks.
-bool CmdVelConverter::RegisterCallbacks(const ros::NodeHandle& n) {
-  ros::NodeHandle nl(n);
-
-  // Subscribers.
-  control_sub_ = nl.subscribe(
-    control_topic_.c_str(), 1, &CmdVelConverter::ControlCallback, this);
-
-  // Publishers.
-  cmd_vel_pub_ = nl.advertise<geometry_msgs::Twist>(
-    cmd_vel_topic_.c_str(), 1, false);
-
-  return true;
+// Listen for whether we're in flight or not.
+void ControlMerger::InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
+  in_flight_ = !in_flight_;
 }
+
 // Process an incoming reference point.
-void CmdVelConverter::
-ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
-  geometry_msgs::Twist twist;
-
-  // Fill in the Twist, following the conversion process in the
-  // crazyflie_server.cpp file function named "cmdVelChanged()".
-  // NOTE! Some dimensions have been flipped and/or converted to degrees
-  // in order to conform to expectations of the crazyflie firmware.
-  twist.linear.y = crazyflie_utils::angles::RadiansToDegrees(msg->control.roll);
-  twist.linear.x = crazyflie_utils::angles::RadiansToDegrees(msg->control.pitch);
-  twist.angular.z = -crazyflie_utils::angles::RadiansToDegrees(msg->control.yaw_dot);
-  twist.linear.z = crazyflie_utils::pwm::ThrustToPwmDouble(msg->control.thrust);
-
-  cmd_vel_pub_.publish(twist);
+void ControlMerger::ControlCallback(
+  const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
+  control_ = msg->control;
+  control_been_updated_ = true;
 }
 
 } //\namespace crazyflie_control_merger

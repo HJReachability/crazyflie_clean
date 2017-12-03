@@ -36,41 +36,85 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// LQR hover controller for the Crazyflie. Assumes that the state space is
-// given by the DubinsStateStamped message type, which is a 7D model.
+// Base class to merge control messages from two different controllers into
+// a single ControlStamped message.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_LQR_DUBINS_STATE_LQR_H
-#define CRAZYFLIE_LQR_DUBINS_STATE_LQR_H
+#ifndef CRAZYFLIE_CONTROL_MERGER_CONTROL_MERGER_H
+#define CRAZYFLIE_CONTROL_MERGER_CONTROL_MERGER_H
 
-#include <crazyflie_lqr/linear_feedback_controller.h>
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
-#include <crazyflie_msgs/DubinsStateStamped.h>
 #include <crazyflie_msgs/ControlStamped.h>
+#include <crazyflie_msgs/Control.h>
 
 #include <ros/ros.h>
-#include <math.h>
-#include <fstream>
+#include <std_msgs/Empty.h>
 
-class DubinsStateLqr : public LinearFeedbackController {
+namespace crazyflie_control_merger {
+
+class ControlMerger {
 public:
-  ~DubinsStateLqr() {}
-  explicit DubinsStateLqr()
-    : LinearFeedbackController() {}
+  virtual ~ControlMerger() {}
+  explicit ControlMerger()
+    : control_been_updated_(false),
+      prioritized_control_been_updated_(false),
+      in_flight_(false),
+      initialized_(false) {}
 
-  bool Initialize(const ros::NodeHandle& n);
+  // Initialize this class.
+  virtual bool Initialize(const ros::NodeHandle& n);
 
-private:
-  // Register callbacks.
-  bool RegisterCallbacks(const ros::NodeHandle& n);
+protected:
+  enum Mode { MERGE, LQR, PRIORITIZED };
+
+  // Load parameters and register callbacks.
+  virtual bool LoadParameters(const ros::NodeHandle& n);
+  virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
+
+  // Listen for whether we're in flight or not.
+  void InFlightCallback(const std_msgs::Empty::ConstPtr& msg);
 
   // Process an incoming reference point.
-  void ReferenceCallback(const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg);
+  void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
 
-  // Process an incoming state measurement.
-  void StateCallback(const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg);
-}; //\class DubinsStateLqr
+  // Timer callback.
+  virtual void TimerCallback(const ros::TimerEvent& e) = 0;
+
+  // Most recent control signal.
+  crazyflie_msgs::Control control_;
+
+  // Flag for whether control or prioritized control has been updated.
+  bool control_been_updated_;
+  bool prioritized_control_been_updated_;
+
+  // Timer.
+  ros::Timer timer_;
+  double dt_;
+
+  // Publishers, subscribers, and topics.
+  ros::Publisher merged_pub_;
+  ros::Subscriber control_sub_;
+  ros::Subscriber prioritized_control_sub_;
+  ros::Subscriber in_flight_sub_;
+
+  std::string merged_topic_;
+  std::string control_topic_;
+  std::string prioritized_control_topic_;
+  std::string in_flight_topic_;
+
+  // Mode, either MERGE, LQR, or PRIORITIZED.
+  Mode mode_;
+
+  // Are we in flight or not?
+  bool in_flight_;
+
+  // Naming and initialization.
+  bool initialized_;
+  std::string name_;
+}; //\class ControlMerger
+
+} //\crazyflie_control_merger
 
 #endif

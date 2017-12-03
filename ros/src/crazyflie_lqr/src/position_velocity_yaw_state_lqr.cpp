@@ -37,57 +37,30 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // LQR hover controller for the Crazyflie. Assumes that the state space is
-// given by the DubinsStateStamped message type, which is a 7D model.
+// given by the PositionVelocityYawStateStamped message type, which is a 7D
+// model.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#include <crazyflie_lqr/dubins_state_lqr.h>
-
-// Load parameters.
-bool DubinsStateLqr::Initialize(const ros::NodeHandle& n) {
-  name_ = ros::names::append(n.getNamespace(), "dubins_state_lift_lqr");
-
-  if (!LoadParameters(n)) {
-    ROS_ERROR("%s: Failed to load parameters.", name_.c_str());
-    return false;
-  }
-
-  if (!RegisterCallbacks(n)) {
-    ROS_ERROR("%s: Failed to register callbacks.", name_.c_str());
-    return false;
-  }
-
-  // Load K, x_ref, u_ref from disk.
-  if (!LoadFromDisk()) {
-    ROS_ERROR("%s: Failed to load K, x_ref, u_ref from disk.", name_.c_str());
-    return false;
-  }
-
-  initialized_ = true;
-  return true;
-}
+#include <crazyflie_lqr/position_velocity_yaw_state_lqr.h>
 
 // Register callbacks.
-bool DubinsStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
+bool PositionVelocityYawStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
   // Subscribers.
   state_sub_ = nl.subscribe(
-    state_topic_.c_str(), 1, &DubinsStateLqr::StateCallback, this);
+    state_topic_.c_str(), 1, &PositionVelocityYawStateLqr::StateCallback, this);
 
   reference_sub_ = nl.subscribe(
-    reference_topic_.c_str(), 1, &DubinsStateLqr::ReferenceCallback, this);
-
-  // Control publisher.
-  control_pub_ = nl.advertise<crazyflie_msgs::ControlStamped>(
-    control_topic_.c_str(), 1, false);
+    reference_topic_.c_str(), 1, &PositionVelocityYawStateLqr::ReferenceCallback, this);
 
   return true;
 }
 
 // Process an incoming reference point change.
-void DubinsStateLqr::ReferenceCallback(
-  const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg) {
+void PositionVelocityYawStateLqr::ReferenceCallback(
+  const crazyflie_msgs::PositionVelocityYawStateStamped::ConstPtr& msg) {
   x_ref_(0) = msg->state.x;
   x_ref_(1) = msg->state.y;
   x_ref_(2) = msg->state.z;
@@ -100,8 +73,8 @@ void DubinsStateLqr::ReferenceCallback(
 }
 
 // Process an incoming state measurement.
-void DubinsStateLqr::StateCallback(
-  const crazyflie_msgs::DubinsStateStamped::ConstPtr& msg) {
+void PositionVelocityYawStateLqr::StateCallback(
+  const crazyflie_msgs::PositionVelocityYawStateStamped::ConstPtr& msg) {
   // Catch no reference.
   if (!received_reference_)
     return;
