@@ -54,6 +54,8 @@
 #include <math.h>
 #include <fstream>
 
+namespace crazyflie_lqr {
+
 class PositionVelocityYawStateLqr : public LinearFeedbackController {
 public:
   virtual ~PositionVelocityYawStateLqr() {}
@@ -72,5 +74,7 @@ private:
   void StateCallback(
     const crazyflie_msgs::PositionVelocityYawStateStamped::ConstPtr& msg);
 }; //\class PositionVelocityYawStateLqr
+
+} //\namespace crazyflie_lqr
 
 #endif

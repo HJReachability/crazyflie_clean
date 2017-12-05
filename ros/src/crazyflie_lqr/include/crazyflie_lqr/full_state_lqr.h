@@ -54,6 +54,8 @@
 #include <math.h>
 #include <fstream>
 
+namespace crazyflie_lqr {
+
 class FullStateLqr : public LinearFeedbackController {
 public:
   virtual ~FullStateLqr() {}
@@ -70,5 +72,7 @@ private:
   // Process an incoming state measurement.
   void StateCallback(const crazyflie_msgs::FullStateStamped::ConstPtr& msg);
 }; //\class FullStateLqr
+
+} //\namespace crazyflie_lqr
 
 #endif

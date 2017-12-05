@@ -72,22 +72,22 @@ protected:
   virtual bool LoadParameters(const ros::NodeHandle& n);
   virtual bool RegisterCallbacks(const ros::NodeHandle& n) = 0;
 
-  // Process an incoming reference point.
+  // Process an incoming control message.
+  // NOTE! Derived classes should also have another callback for the specific
+  // type of prioritized control message.
   void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
 
-  // Timer callback.
-  virtual void TimerCallback(const ros::TimerEvent& e) = 0;
+  // Every derived class must implement a function to merge and publish control.
+  virtual void PublishMergedControl() const = 0;
 
   // Most recent control signal.
+  // NOTE! Derived classes should also have another callback for the specific
+  // type of prioritized control message.
   crazyflie_msgs::Control control_;
 
   // Flag for whether control or prioritized control has been updated.
   bool control_been_updated_;
   bool prioritized_control_been_updated_;
-
-  // Timer.
-  ros::Timer timer_;
-  double dt_;
 
   // Publishers, subscribers, and topics.
   ros::Publisher merged_pub_;

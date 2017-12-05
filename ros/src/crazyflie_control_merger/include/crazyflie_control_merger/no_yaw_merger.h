@@ -63,12 +63,12 @@ private:
   // Register callbacks.
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Process an incoming state measurement.
+  // Process an incoming prioritized control signal.
   void NoYawControlCallback(
     const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg);
 
-  // Timer callback.
-  void TimerCallback(const ros::TimerEvent& e);
+  // Every derived class must implement a function to merge and publish control.
+  void PublishMergedControl() const;
 
   // Most recent priortized control signal.
   crazyflie_msgs::NoYawControl no_yaw_control_;

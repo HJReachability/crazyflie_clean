@@ -75,9 +75,6 @@ bool ControlMerger::Initialize(const ros::NodeHandle& n) {
 bool ControlMerger::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
-  // Time step.
-  if (!nl.getParam("time_step", dt_)) return false;
-
   // Topics.
   if (!nl.getParam("topics/control", control_topic_)) return false;
   if (!nl.getParam("topics/prioritized_control", prioritized_control_topic_))
@@ -110,6 +107,8 @@ void ControlMerger::ControlCallback(
   const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
   control_ = msg->control;
   control_been_updated_ = true;
+
+  PublishMergedControl();
 }
 
 } //\namespace crazyflie_control_merger

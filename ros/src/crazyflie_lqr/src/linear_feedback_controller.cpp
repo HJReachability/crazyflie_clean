@@ -43,6 +43,8 @@
 
 #include <crazyflie_lqr/linear_feedback_controller.h>
 
+namespace crazyflie_lqr {
+
 // Initialize.
 bool LinearFeedbackController::Initialize(const ros::NodeHandle& n) {
   name_ = ros::names::append(n.getNamespace(), "crazyflie_lqr");
@@ -152,3 +154,5 @@ VectorXd LinearFeedbackController::Control(const VectorXd& x) const {
 
   return K_ * (x - x_ref_) + u_ref_;
 }
+
+} //\namespace crazyflie_lqr

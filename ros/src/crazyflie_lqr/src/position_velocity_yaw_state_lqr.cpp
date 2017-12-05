@@ -44,6 +44,8 @@
 
 #include <crazyflie_lqr/position_velocity_yaw_state_lqr.h>
 
+namespace crazyflie_lqr {
+
 // Register callbacks.
 bool PositionVelocityYawStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
@@ -122,3 +124,5 @@ void PositionVelocityYawStateLqr::StateCallback(
 
   control_pub_.publish(control_msg);
 }
+
+} //\namespace crazyflie_lqr

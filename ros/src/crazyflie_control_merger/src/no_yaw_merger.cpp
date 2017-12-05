@@ -53,9 +53,6 @@ bool NoYawMerger::RegisterCallbacks(const ros::NodeHandle& n) {
   prioritized_control_sub_ = nl.subscribe(
     prioritized_control_topic_.c_str(), 1, &NoYawMerger::NoYawControlCallback, this);
 
-  // Timer.
-  timer_ = nl.createTimer(ros::Duration(dt_), &NoYawMerger::TimerCallback, this);
-
   return true;
 }
 
@@ -64,10 +61,13 @@ void NoYawMerger::NoYawControlCallback(
   const crazyflie_msgs::NoYawControlStamped::ConstPtr& msg) {
   no_yaw_control_ = msg->control;
   prioritized_control_been_updated_ = true;
+
+  // Merge and publish.
+  PublishMergedControl();
 }
 
-// Timer callback.
-void NoYawMerger::TimerCallback(const ros::TimerEvent& e) {
+// Merge and publish.
+void NoYawMerger::PublishMergedControl() const {
   crazyflie_msgs::ControlStamped msg;
   msg.header.stamp = ros::Time::now();
 

@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "position_velocity_yaw_state_lqr");
   ros::NodeHandle n("~");
 
-  PositionVelocityYawStateLqr lqr;
+  crazyflie_lqr::PositionVelocityYawStateLqr lqr;
 
   if (!lqr.Initialize(n)) {
     ROS_ERROR("%s: Failed to initialize position_velocity_yaw_state_lqr.",

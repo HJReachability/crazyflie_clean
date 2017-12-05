@@ -53,6 +53,8 @@
 #include <math.h>
 #include <fstream>
 
+namespace crazyflie_lqr {
+
 class LinearFeedbackController {
 public:
   virtual ~LinearFeedbackController() {}
@@ -104,5 +106,7 @@ private:
   // Load K, x_ref, u_ref from disk.
   bool LoadFromDisk();
 }; //\class LinearFeedbackController
+
+} //\namespace crazyflie_lqr
 
 #endif

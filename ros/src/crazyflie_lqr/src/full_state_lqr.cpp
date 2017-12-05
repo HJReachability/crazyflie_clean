@@ -43,6 +43,8 @@
 
 #include <crazyflie_lqr/full_state_lqr.h>
 
+namespace crazyflie_lqr {
+
 // Register callbacks.
 bool FullStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
@@ -137,3 +139,5 @@ void FullStateLqr::StateCallback(
 
   control_pub_.publish(control_msg);
 }
+
+} //\namespace crazyflie_lqr

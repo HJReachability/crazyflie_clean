@@ -107,7 +107,7 @@
     <param name="hover/z" value="$(arg takeoff_hover_z)" />
   </node>
 
-  <!-- Takeoff server node. -->
+  <!-- Takeoff control filter node. -->
   <node name="takeoff_control_filter"
         pkg="crazyflie_takeoff"
         type="takeoff_control_filter_node"
@@ -117,10 +117,6 @@
     <param name="topics/commanded_control" value="$(arg lqr_control_topic)" />
     <param name="topics/final_control" value="$(arg final_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
-
-    <param name="hover/x" value="$(arg takeoff_hover_x)" />
-    <param name="hover/y" value="$(arg takeoff_hover_y)" />
-    <param name="hover/z" value="$(arg takeoff_hover_z)" />
   </node>
 
   <!-- Launch RViz with the proper config file robot descriptor. -->

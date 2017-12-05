@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "full_state_lqr");
   ros::NodeHandle n("~");
 
-  FullStateLqr lqr;
+  crazyflie_lqr::FullStateLqr lqr;
 
   if (!lqr.Initialize(n)) {
     ROS_ERROR("%s: Failed to initialize full_state_lqr.",
