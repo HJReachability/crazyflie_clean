@@ -112,8 +112,10 @@ void PositionVelocityYawStateLqr::StateCallback(
 
   // Compute optimal control.
   VectorXd u = K_ * x_rel + u_ref_;
-  u(0) = crazyflie_utils::angles::WrapAngleRadians(u(0));
-  u(1) = crazyflie_utils::angles::WrapAngleRadians(u(1));
+
+  // Assume we're thresholding controls to be small angles.
+  //  u(0) = crazyflie_utils::angles::WrapAngleRadians(u(0));
+  //  u(1) = crazyflie_utils::angles::WrapAngleRadians(u(1));
 
   // Publish.
   crazyflie_msgs::ControlStamped control_msg;
