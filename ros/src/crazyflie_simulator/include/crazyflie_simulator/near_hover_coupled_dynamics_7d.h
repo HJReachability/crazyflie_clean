@@ -36,58 +36,58 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Angle manipulation utilities.
+// Near hover forward dynamics.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_UTILS_ANGLES_H
-#define CRAZYFLIE_UTILS_ANGLES_H
+#ifndef CRAZYFLIE_SIMULATOR_NEAR_HOVER_DYNAMICS_H
+#define CRAZYFLIE_SIMULATOR_NEAR_HOVER_DYNAMICS_H
 
+#include <crazyflie_simulator/forward_dynamics.h>
 #include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
+#include <crazyflie_msgs/ControlStamped.h>
 
-namespace crazyflie_utils {
-namespace angles {
-  // Convert degrees to radians.
-  static inline double DegreesToRadians(double d) {
-    return d * M_PI / 180.0;
+#include <ros/ros.h>
+#include <math.h>
+#include <fstream>
+
+namespace crazyflie_simulator {
+
+class NearHoverCoupledDynamics7D : public ForwardDynamics {
+public:
+  virtual ~NearHoverCoupledDynamics7D() {}
+  explicit NearHoverCoupledDynamics7D()
+    : ForwardDynamics() {}
+
+  // Evaluate forward dynamics at a particular state.
+  inline VectorXd operator()(const VectorXd& x, const VectorXd& u) const {
+    VectorXd x_dot(7);
+
+#if 0
+    // Approximate dynamics.
+    x_dot(0) = x(3);
+    x_dot(1) = x(4);
+    x_dot(2) = x(5);
+    x_dot(3) = crazyflie_utils::constants::G * std::tan(u(1));
+    x_dot(4) = -crazyflie_utils::constants::G * std::tan(u(0));
+    x_dot(5) = u(3) - crazyflie_utils::constants::G;
+    x_dot(6) = u(2);
+#endif
+
+    // Actual dynamics.
+    x_dot(0) = x(3);
+    x_dot(1) = x(4);
+    x_dot(2) = x(5);
+    x_dot(3) = u(2) * (std::sin(u(1))*std::cos(x(6)) + std::sin(u(0))*std::sin(x(6)));
+    x_dot(4) = u(2) * (-std::sin(u(0))*std::cos(x(6)) + std::sin(u(1))*std::sin(x(6)));
+    x_dot(5) = u(2)*std::cos(u(0))*std::cos(u(1)) - crazyflie_utils::constants::G;
+    x_dot(6) = u(3);
+
+    return x_dot;
   }
+}; //\class NearHoverDynamics
 
-  // Convert radians to degrees.
-  static inline double RadiansToDegrees(double r) {
-    return r * 180.0 / M_PI;
-  }
-
-  // Wrap angle in degrees to [-180, 180].
-  static inline double WrapAngleDegrees(double d) {
-    d = std::fmod(d + 180.0, 360.0) - 180.0;
-
-    if (d < -180.0)
-      d += 360.0;
-
-    return d;
-  }
-
-  // Wrap angle in radians to [-pi, pi].
-  static inline double WrapAngleRadians(double r) {
-    r = std::fmod(r + M_PI, 2.0 * M_PI) - M_PI;
-
-    if (r < -M_PI)
-      r += 2.0 * M_PI;
-
-    return r;
-  }
-
-  // Convert rotation matrix to roll-pitch-yaw Euler angles with
-  // aerospace convention:
-  static inline Eigen::Vector3d Matrix2RPY(const Eigen::Matrix3d& R) {
-    const double roll = std::atan2(-R(1,2), R(2,2));
-    const double pitch = std::asin (R(0,2));
-    const double yaw = std::atan2(-R(0,1), R(0,0));
-
-    return Vector3d(roll, pitch, yaw);
-  }
-
-} //\namespace angles
-} //\namespace crazyflie_utils
+} //\namespace crazyflie_simulator
 
 #endif

@@ -36,58 +36,74 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Angle manipulation utilities.
+// Near hover simulator.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_UTILS_ANGLES_H
-#define CRAZYFLIE_UTILS_ANGLES_H
+#ifndef CRAZYFLIE_SIMULATOR_NEAR_HOVER_SIMULATOR_H
+#define CRAZYFLIE_SIMULATOR_NEAR_HOVER_SIMULATOR_H
 
+#include <crazyflie_simulator/near_hover_coupled_dynamics_7d.h>
 #include <crazyflie_utils/types.h>
+#include <crazyflie_utils/angles.h>
 
-namespace crazyflie_utils {
-namespace angles {
-  // Convert degrees to radians.
-  static inline double DegreesToRadians(double d) {
-    return d * M_PI / 180.0;
-  }
+#include <ros/ros.h>
+#include <tf2_ros/transform_broadcaster.h>
+#include <math.h>
+#include <fstream>
 
-  // Convert radians to degrees.
-  static inline double RadiansToDegrees(double r) {
-    return r * 180.0 / M_PI;
-  }
+namespace crazyflie_simulator {
 
-  // Wrap angle in degrees to [-180, 180].
-  static inline double WrapAngleDegrees(double d) {
-    d = std::fmod(d + 180.0, 360.0) - 180.0;
+class NearHoverSimulatorCoupled7D {
+public:
+  ~NearHoverSimulatorCoupled7D() {}
+  NearHoverSimulatorCoupled7D()
+    : received_control_(false),
+      initialized_(false) {}
 
-    if (d < -180.0)
-      d += 360.0;
+  // Initialize this class by reading parameters and loading callbacks.
+  bool Initialize(const ros::NodeHandle& n);
 
-    return d;
-  }
+private:
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-  // Wrap angle in radians to [-pi, pi].
-  static inline double WrapAngleRadians(double r) {
-    r = std::fmod(r + M_PI, 2.0 * M_PI) - M_PI;
+  // Timer callback.
+  void TimerCallback(const ros::TimerEvent& e);
 
-    if (r < -M_PI)
-      r += 2.0 * M_PI;
+  // Update control signal.
+  void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
 
-    return r;
-  }
+  // Current state and control.
+  VectorXd x_;
+  VectorXd u_;
+  NearHoverCoupledDynamics7D dynamics_;
 
-  // Convert rotation matrix to roll-pitch-yaw Euler angles with
-  // aerospace convention:
-  static inline Eigen::Vector3d Matrix2RPY(const Eigen::Matrix3d& R) {
-    const double roll = std::atan2(-R(1,2), R(2,2));
-    const double pitch = std::asin (R(0,2));
-    const double yaw = std::atan2(-R(0,1), R(0,0));
+  // Flag for whether first control signal has been received.
+  bool received_control_;
 
-    return Vector3d(roll, pitch, yaw);
-  }
+  // Timer.
+  ros::Timer timer_;
+  double dt_;
+  ros::Time last_time_;
 
-} //\namespace angles
-} //\namespace crazyflie_utils
+  // TF broadcasting.
+  tf2_ros::TransformBroadcaster br_;
+
+  // Publishers and subscribers.
+  ros::Subscriber control_sub_;
+  std::string control_topic_;
+
+  // Frames of reference.
+  std::string fixed_frame_id_;
+  std::string robot_frame_id_;
+
+  // Initialized flag and name.
+  bool initialized_;
+  std::string name_;
+}; //\class NearHoverSimulator
+
+} //\namespace crazyflie_simulator
 
 #endif

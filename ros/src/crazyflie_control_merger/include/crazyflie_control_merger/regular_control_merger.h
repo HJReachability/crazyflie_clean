@@ -36,58 +36,46 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Angle manipulation utilities.
+// Class to merge control messages from two different controllers into
+// a single ControlStamped message.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_UTILS_ANGLES_H
-#define CRAZYFLIE_UTILS_ANGLES_H
+#ifndef CRAZYFLIE_CONTROL_MERGER_REGULAR_CONTROL_MERGER_H
+#define CRAZYFLIE_CONTROL_MERGER_REGULAR_CONTROL_MERGER_H
 
-#include <crazyflie_utils/types.h>
+#include <crazyflie_control_merger/control_merger.h>
+#include <crazyflie_msgs/PrioritizedControlStamped.h>
+#include <crazyflie_msgs/PrioritizedControl.h>
+#include <crazyflie_msgs/ControlStamped.h>
+#include <crazyflie_msgs/Control.h>
 
-namespace crazyflie_utils {
-namespace angles {
-  // Convert degrees to radians.
-  static inline double DegreesToRadians(double d) {
-    return d * M_PI / 180.0;
-  }
+#include <ros/ros.h>
+#include <math.h>
 
-  // Convert radians to degrees.
-  static inline double RadiansToDegrees(double r) {
-    return r * 180.0 / M_PI;
-  }
+namespace crazyflie_control_merger {
 
-  // Wrap angle in degrees to [-180, 180].
-  static inline double WrapAngleDegrees(double d) {
-    d = std::fmod(d + 180.0, 360.0) - 180.0;
+class RegularControlMerger : public ControlMerger {
+public:
+  virtual ~RegularControlMerger() {}
+  explicit RegularControlMerger()
+    : ControlMerger() {}
 
-    if (d < -180.0)
-      d += 360.0;
+private:
+  // Register callbacks.
+  bool RegisterCallbacks(const ros::NodeHandle& n);
 
-    return d;
-  }
+  // Process an incoming prioritized control signal.
+  void PrioritizedControlCallback(
+    const crazyflie_msgs::PrioritizedControlStamped::ConstPtr& msg);
 
-  // Wrap angle in radians to [-pi, pi].
-  static inline double WrapAngleRadians(double r) {
-    r = std::fmod(r + M_PI, 2.0 * M_PI) - M_PI;
+  // Every derived class must implement a function to merge and publish control.
+  void PublishMergedControl() const;
 
-    if (r < -M_PI)
-      r += 2.0 * M_PI;
+  // Most recent priortized control signal.
+  crazyflie_msgs::PrioritizedControl prioritized_control_;
+}; //\class NoYawMerger
 
-    return r;
-  }
-
-  // Convert rotation matrix to roll-pitch-yaw Euler angles with
-  // aerospace convention:
-  static inline Eigen::Vector3d Matrix2RPY(const Eigen::Matrix3d& R) {
-    const double roll = std::atan2(-R(1,2), R(2,2));
-    const double pitch = std::asin (R(0,2));
-    const double yaw = std::atan2(-R(0,1), R(0,0));
-
-    return Vector3d(roll, pitch, yaw);
-  }
-
-} //\namespace angles
-} //\namespace crazyflie_utils
+} //\crazyflie_control_merger
 
 #endif

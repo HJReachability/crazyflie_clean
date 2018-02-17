@@ -36,58 +36,26 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Angle manipulation utilities.
+// The NoYawMerger node.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_UTILS_ANGLES_H
-#define CRAZYFLIE_UTILS_ANGLES_H
+#include <ros/ros.h>
+#include <crazyflie_control_merger/regular_control_merger.h>
 
-#include <crazyflie_utils/types.h>
+int main(int argc, char** argv) {
+  ros::init(argc, argv, "no_yaw_merger");
+  ros::NodeHandle n("~");
 
-namespace crazyflie_utils {
-namespace angles {
-  // Convert degrees to radians.
-  static inline double DegreesToRadians(double d) {
-    return d * M_PI / 180.0;
+  crazyflie_control_merger::RegularControlMerger merger;
+
+  if (!merger.Initialize(n)) {
+    ROS_ERROR("%s: Failed to initialize merger.",
+              ros::this_node::getName().c_str());
+    return EXIT_FAILURE;
   }
 
-  // Convert radians to degrees.
-  static inline double RadiansToDegrees(double r) {
-    return r * 180.0 / M_PI;
-  }
+  ros::spin();
 
-  // Wrap angle in degrees to [-180, 180].
-  static inline double WrapAngleDegrees(double d) {
-    d = std::fmod(d + 180.0, 360.0) - 180.0;
-
-    if (d < -180.0)
-      d += 360.0;
-
-    return d;
-  }
-
-  // Wrap angle in radians to [-pi, pi].
-  static inline double WrapAngleRadians(double r) {
-    r = std::fmod(r + M_PI, 2.0 * M_PI) - M_PI;
-
-    if (r < -M_PI)
-      r += 2.0 * M_PI;
-
-    return r;
-  }
-
-  // Convert rotation matrix to roll-pitch-yaw Euler angles with
-  // aerospace convention:
-  static inline Eigen::Vector3d Matrix2RPY(const Eigen::Matrix3d& R) {
-    const double roll = std::atan2(-R(1,2), R(2,2));
-    const double pitch = std::asin (R(0,2));
-    const double yaw = std::atan2(-R(0,1), R(0,0));
-
-    return Vector3d(roll, pitch, yaw);
-  }
-
-} //\namespace angles
-} //\namespace crazyflie_utils
-
-#endif
+  return EXIT_SUCCESS;
+}

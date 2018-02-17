@@ -36,58 +36,66 @@
 
 ///////////////////////////////////////////////////////////////////////////////
 //
-// Angle manipulation utilities.
+// Class to merge control messages from two different controllers into
+// a single ControlStamped message.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef CRAZYFLIE_UTILS_ANGLES_H
-#define CRAZYFLIE_UTILS_ANGLES_H
+#include <crazyflie_control_merger/regular_control_merger.h>
 
-#include <crazyflie_utils/types.h>
+namespace crazyflie_control_merger {
 
-namespace crazyflie_utils {
-namespace angles {
-  // Convert degrees to radians.
-  static inline double DegreesToRadians(double d) {
-    return d * M_PI / 180.0;
+// Register callbacks.
+bool RegularControlMerger::RegisterCallbacks(const ros::NodeHandle& n) {
+  ros::NodeHandle nl(n);
+
+  // Subscribers.
+  prioritized_control_sub_ = nl.subscribe(
+    prioritized_control_topic_.c_str(), 1,
+    &RegularControlMerger::PrioritizedControlCallback, this);
+
+  return true;
+}
+
+// Process an incoming state measurement.
+void RegularControlMerger::PrioritizedControlCallback(
+  const crazyflie_msgs::PrioritizedControlStamped::ConstPtr& msg) {
+  prioritized_control_ = msg->control;
+  prioritized_control_been_updated_ = true;
+
+  // Merge and publish.
+  PublishMergedControl();
+}
+
+// Merge and publish.
+void RegularControlMerger::PublishMergedControl() const {
+  crazyflie_msgs::ControlStamped msg;
+  msg.header.stamp = ros::Time::now();
+
+  if (!control_been_updated_) {
+    return;
+  } else if (!prioritized_control_been_updated_) {
+    msg.control = control_;
+  } else {
+    // Extract no yaw priority.
+    double p = prioritized_control_.priority;
+    if (mode_ == LQR)
+      p = 0.0;
+    else if (mode_ == PRIORITIZED)
+      p = 1.0;
+
+    // Set message fields.
+    msg.control.roll = (1.0 - p) * control_.roll +
+      p * prioritized_control_.control.roll;
+    msg.control.pitch = (1.0 - p) * control_.pitch +
+      p * prioritized_control_.control.pitch;
+    msg.control.yaw_dot = (1.0 - p) * control_.yaw_dot +
+      p * prioritized_control_.control.yaw_dot;
+    msg.control.thrust = (1.0 - p) * control_.thrust +
+      p * prioritized_control_.control.thrust;
   }
 
-  // Convert radians to degrees.
-  static inline double RadiansToDegrees(double r) {
-    return r * 180.0 / M_PI;
-  }
+  merged_pub_.publish(msg);
+}
 
-  // Wrap angle in degrees to [-180, 180].
-  static inline double WrapAngleDegrees(double d) {
-    d = std::fmod(d + 180.0, 360.0) - 180.0;
-
-    if (d < -180.0)
-      d += 360.0;
-
-    return d;
-  }
-
-  // Wrap angle in radians to [-pi, pi].
-  static inline double WrapAngleRadians(double r) {
-    r = std::fmod(r + M_PI, 2.0 * M_PI) - M_PI;
-
-    if (r < -M_PI)
-      r += 2.0 * M_PI;
-
-    return r;
-  }
-
-  // Convert rotation matrix to roll-pitch-yaw Euler angles with
-  // aerospace convention:
-  static inline Eigen::Vector3d Matrix2RPY(const Eigen::Matrix3d& R) {
-    const double roll = std::atan2(-R(1,2), R(2,2));
-    const double pitch = std::asin (R(0,2));
-    const double yaw = std::atan2(-R(0,1), R(0,0));
-
-    return Vector3d(roll, pitch, yaw);
-  }
-
-} //\namespace angles
-} //\namespace crazyflie_utils
-
-#endif
+} //\namespace crazyflie_control_merger
