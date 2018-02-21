@@ -79,8 +79,8 @@ public:
     x_dot(0) = x(3);
     x_dot(1) = x(4);
     x_dot(2) = x(5);
-    x_dot(3) = u(3) * (std::sin(u(1))*std::cos(x(6)) - std::sin(u(0))*std::sin(x(6)));
-    x_dot(4) = u(3) * (std::sin(u(0))*std::cos(x(6)) + std::sin(u(1))*std::sin(x(6)));
+    x_dot(3) = u(3) * (std::sin(u(1))*std::cos(x(6)) + std::sin(u(0))*std::sin(x(6)));
+    x_dot(4) = u(3) * (-std::sin(u(0))*std::cos(x(6)) + std::sin(u(1))*std::sin(x(6)));
     x_dot(5) = u(3)*std::cos(u(0))*std::cos(u(1)) - crazyflie_utils::constants::G;
     x_dot(6) = u(2);
 
