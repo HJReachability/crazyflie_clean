@@ -62,10 +62,13 @@ class PositionVelocityYawStateLiftLqr : public LinearFeedbackController {
 public:
   virtual ~PositionVelocityYawStateLiftLqr() {}
   explicit PositionVelocityYawStateLiftLqr()
-    : LinearFeedbackController() {}
+    : LinearFeedbackController(),
+      x_int_(Vector3d::Zero()),
+      x_int_thresh_(Vector3d::Zero()) {}
 
 private:
-  // Register callbacks.
+  // Load parameters and register callbacks.
+  bool LoadParameters(const ros::NodeHandle& n);
   bool RegisterCallbacks(const ros::NodeHandle& n);
 
   // Process an incoming reference point.
@@ -75,6 +78,11 @@ private:
   // Process an incoming state measurement.
   void StateCallback(
     const crazyflie_msgs::PositionVelocityYawStateStamped::ConstPtr& msg);
+
+  // Integral of position error.
+  Vector3d x_int_;
+  Vector3d x_int_thresh_;
+  Vector3d integrator_k_;
 }; //\class PositionVelocityYawStateLiftLqr
 
 } //\namespace crazyflie_lqr

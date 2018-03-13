@@ -46,6 +46,32 @@
 
 namespace crazyflie_lqr {
 
+// Load parameters.
+bool PositionVelocityYawStateLqr::LoadParameters(const ros::NodeHandle& n) {
+  if (!LinearFeedbackController::LoadParameters(n))
+    return false;
+
+  ros::NodeHandle nl(n);
+
+  // Integrator threshold.
+  if (!nl.getParam("integrator/thresh/x", x_int_thresh_(0)))
+    x_int_thresh_(0) = 0.0;
+  if (!nl.getParam("integrator/thresh/y", x_int_thresh_(1)))
+    x_int_thresh_(1) = 0.0;
+  if (!nl.getParam("integrator/thresh/z", x_int_thresh_(2)))
+    x_int_thresh_(2) = 0.0;
+
+  // Integrator constants.
+  if (!nl.getParam("integrator/k/x", integrator_k_(0)))
+    integrator_k_(0) = 0.0;
+  if (!nl.getParam("integrator/k/y", integrator_k_(1)))
+    integrator_k_(1) = 0.0;
+  if (!nl.getParam("integrator/k/z", integrator_k_(2)))
+    integrator_k_(2) = 0.0;
+
+  return true;
+}
+
 // Register callbacks.
 bool PositionVelocityYawStateLqr::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
@@ -81,6 +107,9 @@ void PositionVelocityYawStateLqr::StateCallback(
   if (!received_reference_)
     return;
 
+  if (last_state_time_ < 0.0)
+    last_state_time_ = ros::Time::now().toSec();
+
   // Read the message into the state and compute relative state.
   VectorXd x(x_dim_);
   x(0) = msg->state.x;
@@ -110,8 +139,18 @@ void PositionVelocityYawStateLqr::StateCallback(
   // Wrap angles.
   x_rel(6) = crazyflie_utils::angles::WrapAngleRadians(x_rel(6));
 
-  // Compute optimal control.
-  VectorXd u = K_ * x_rel + u_ref_;
+  // Update integral of position error.
+  x_int_ += x_rel.head(3) * (ros::Time::now().toSec() - last_state_time_);
+  x_int_ = x_int_.cwiseMax(-x_int_thresh_);
+  x_int_ = x_int_.cwiseMin(x_int_thresh_);
+
+  last_state_time_ = ros::Time::now().toSec();
+
+  // Compute state feedback control.
+  VectorXd u = u_ref_ + K_ * x_rel;
+  u(1) += integrator_k_(0) * x_int_(0);
+  u(0) += integrator_k_(1) * x_int_(1);
+  u(3) += integrator_k_(2) * x_int_(2);
 
   // Assume we're thresholding controls to be small angles.
   //  u(0) = crazyflie_utils::angles::WrapAngleRadians(u(0));

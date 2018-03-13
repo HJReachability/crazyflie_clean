@@ -78,6 +78,12 @@ bool TakeoffServer::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("hover/z", init_z)) return false;
   hover_point_ = Vector3d(init_x, init_y, init_z);
 
+  // Takeoff sequence params.
+  if (!nl.getParam("duration/open_loop", open_loop_duration_))
+    open_loop_duration_ = 1.0;
+  if (!nl.getParam("duration/hover", hover_duration_))
+    hover_duration_ = 5.0;
+  
   return true;
 }
 
@@ -170,8 +176,8 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   ROS_INFO("%s: Takeoff requested.", name_.c_str());
 
   // Lift off, and after a short wait return.
-  const ros::Time right_now = ros::Time::now();
-  while ((ros::Time::now() - right_now).toSec() < 1.0) {
+  const ros::Time takeoff_time = ros::Time::now();
+  while ((ros::Time::now() - takeoff_time).toSec() < open_loop_duration_) {
     crazyflie_msgs::ControlStamped msg;
     msg.header.stamp = ros::Time::now();
 
@@ -200,7 +206,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   reference_pub_.publish(reference);
 
   // Give LQR time to get there.
-  ros::Duration(10.0).sleep();
+  ros::Duration(hover_duration_).sleep();
   in_flight_ = true;
 
   // Send the in_flight signal to all other nodes!

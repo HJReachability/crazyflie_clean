@@ -52,8 +52,8 @@ namespace crazyflie_utils {
 namespace pwm {
   // Convert the given thrust to a PWM signal (still double).
   static inline double ThrustToPwmDouble(double thrust) {
-    const double k_thrust = constants::G / 40000.0;
-    return thrust * 40000.0 / constants::G;
+    const double k_thrust = 40000.0 / constants::G;
+    return thrust * k_thrust;
   }
 
   // Get the PWM signal (uint16) to generate the given thrust.

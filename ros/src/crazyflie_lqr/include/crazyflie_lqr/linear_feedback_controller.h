@@ -68,6 +68,7 @@ public:
 protected:
   explicit LinearFeedbackController()
     : received_reference_(false),
+      last_state_time_(-1.0),
       initialized_(false) {}
 
   // Load parameters and register callbacks. These may/must be overridden
@@ -87,6 +88,9 @@ protected:
   // Dimensions of control and state spaces.
   size_t x_dim_;
   size_t u_dim_;
+
+  // Remember last time we got a state callback.
+  double last_state_time_;
 
   // Publishers and subscribers.
   ros::Subscriber state_sub_;

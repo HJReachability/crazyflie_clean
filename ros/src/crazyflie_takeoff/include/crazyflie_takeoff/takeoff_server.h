@@ -96,6 +96,10 @@ private:
   ros::ServiceServer land_srv_;
   bool in_flight_;
 
+  // Takeoff sequence params.
+  double open_loop_duration_;
+  double hover_duration_;
+
   // Timer for refreshing landing control signal.
   ros::Timer timer_;
 
