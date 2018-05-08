@@ -1,6 +1,18 @@
 <?xml version="1.0"?>
 
 <launch>
+  <!-- Crazyflie address. -->
+  <arg name="uri0" value="radio://0/79/2M/E7E7E7E7E7" />
+  <arg name="uri1" value="radio://2/101/2M/E7E7E7E701" />
+  <arg name="uri2" value="radio://0/88/2M/E7E7E7E705" />
+  <arg name="uri3" value="radio://0/93/2M/E7E7E7E703" />
+  <arg name="uri4" value="radio://WE_DO_NOT_HAVE_cf4" />
+  <arg name="uri5" value="radio://0/72/2M/E7E7E7E701" />
+  <arg name="uri6" value="radio://0/25/2M/E7E7E7E701" />
+  <arg name="uri7" value="radio://0/52/2M/E7E7E7E702" />
+
+  <arg name="uri" default="$(arg uri3)" />
+
   <!-- Topics. -->
   <arg name="reference_topic" default="/ref"/>
   <arg name="state_topic" default="/state"/>
@@ -35,9 +47,6 @@
   <!-- Dimensions. -->
   <arg name="x_dim" default="7" />
   <arg name="u_dim" default="4" />
-
-  <!-- Crazyflie address. -->
-  <arg name="uri" default="radio://0/25/2M/E7E7E7E701" />
 
   <!-- Joystick address. -->
   <arg name="joy_dev" default="/dev/input/js0" />

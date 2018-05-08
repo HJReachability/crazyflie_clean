@@ -83,7 +83,7 @@ bool TakeoffServer::LoadParameters(const ros::NodeHandle& n) {
     open_loop_duration_ = 1.0;
   if (!nl.getParam("duration/hover", hover_duration_))
     hover_duration_ = 5.0;
-  
+
   return true;
 }
 
@@ -204,6 +204,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   reference.state.z_dot = 0.0;
 
   reference_pub_.publish(reference);
+  std::cout << "Hover point: " << hover_point_.transpose() << std::endl;
 
   // Give LQR time to get there.
   ros::Duration(hover_duration_).sleep();
