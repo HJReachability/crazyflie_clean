@@ -7,6 +7,10 @@ from std_srvs.srv import Empty
 
 class Controller():
     def __init__(self, use_controller, joy_topic):
+
+
+        rospy.loginfo("INITIALIZING CONTROLLER NODE NOW.")
+        rospy.loginfo("waiting for update_params service...")
         rospy.wait_for_service('update_params')
         rospy.loginfo("found update_params service")
         self._update_params = rospy.ServiceProxy('update_params', UpdateParams)
@@ -33,7 +37,9 @@ class Controller():
         # subscribe to the joystick at the end to make sure that all required
         # services were found
         self._buttons = None
+        rospy.loginfo("subscribing to joy_topic...")
         rospy.Subscriber(joy_topic, Joy, self._joyChanged)
+        rospy.loginfo("subscribed to joy_topic.")
 
     def _joyChanged(self, data):
         for i in range(0, len(data.buttons)):
