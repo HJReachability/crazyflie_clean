@@ -172,7 +172,7 @@
   </node>
 
   <!-- Launch RViz with the proper config file robot descriptor. -->
-<!--   <node name="rviz"
+  <node name="rviz"
         pkg="rviz"
         type="rviz"
         args="-d $(find crazyflie_simulator)/rviz/crazyflie_simulator.rviz"
@@ -181,5 +181,5 @@
     <param name="robot_description"
            command="$(find xacro)/xacro.py
                     $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
-  </node> -->
+  </node>
 </launch>
