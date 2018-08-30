@@ -92,8 +92,13 @@ private:
   std::string reference_topic_;
 
   // Takeoff and landing services.
+  std::string takeoff_srv_name_;
   ros::ServiceServer takeoff_srv_;
+
+  std::string land_srv_name_;
   ros::ServiceServer land_srv_;
+
+  // In flight flag.
   bool in_flight_;
 
   // Takeoff sequence params.

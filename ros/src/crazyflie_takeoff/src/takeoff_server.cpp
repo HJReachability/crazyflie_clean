@@ -84,6 +84,12 @@ bool TakeoffServer::LoadParameters(const ros::NodeHandle& n) {
   if (!nl.getParam("duration/hover", hover_duration_))
     hover_duration_ = 5.0;
 
+  // Service names.
+  if (!nl.getParam("srv/takeoff", takeoff_srv_name_))
+    takeoff_srv_name_ = "/takeoff";
+  if (!nl.getParam("srv/land", land_srv_name_))
+    land_srv_name_ = "/land";
+
   return true;
 }
 
@@ -102,13 +108,15 @@ bool TakeoffServer::RegisterCallbacks(const ros::NodeHandle& n) {
     in_flight_topic_.c_str(), 10, false);
 
   // Services.
-  takeoff_srv_ =
-    nl.advertiseService("/takeoff", &TakeoffServer::TakeoffService, this);
+  takeoff_srv_ = nl.advertiseService(takeoff_srv_name_,
+                                     &TakeoffServer::TakeoffService, this);
 
-  land_srv_ = nl.advertiseService("/land", &TakeoffServer::LandService, this);
+  land_srv_ =
+      nl.advertiseService(land_srv_name_, &TakeoffServer::LandService, this);
 
   // Timer.
-  timer_ =  nl.createTimer(ros::Duration(0.1), &TakeoffServer::TimerCallback, this);
+  timer_ =
+      nl.createTimer(ros::Duration(0.1), &TakeoffServer::TimerCallback, this);
 
   return true;
 }
