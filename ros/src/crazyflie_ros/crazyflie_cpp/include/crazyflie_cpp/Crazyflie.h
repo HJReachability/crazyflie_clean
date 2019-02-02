@@ -4,6 +4,7 @@
 
 #include "Crazyradio.h"
 #include "crtp.h"
+#include <functional>
 #include <list>
 #include <set>
 #include <map>

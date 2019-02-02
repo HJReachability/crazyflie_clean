@@ -7,6 +7,7 @@
 #include "Crazyradio.h"
 
 #include <iostream>
+#include <functional>
 #include <cstring>
 #include <stdexcept>
 #include <thread>
