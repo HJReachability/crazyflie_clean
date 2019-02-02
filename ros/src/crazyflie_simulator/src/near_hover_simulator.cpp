@@ -118,7 +118,7 @@ void NearHoverSimulator::TimerCallback(const ros::TimerEvent& e) {
 
   // Only update state if we have received a control signal from outside.
   if (received_control_)
-    x_ += dynamics_(x_, u_) * (now - last_time_).toSec();
+    x_ += dynamics_(x_, u_) * (now.toSec() - last_time_.toSec());
 
   // Threshold at ground!
   if (x_(2) < 0.0) {

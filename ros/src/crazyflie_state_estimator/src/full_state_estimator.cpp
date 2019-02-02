@@ -79,7 +79,7 @@ void FullStateEstimator::Update(const Vector3d& translation,
     first_update_ = false;
   } else {
     // Time difference.
-    const double dt = (stamp - last_time_).toSec();
+    const double dt = stamp.toSec() - last_time_.toSec();
 
     // TODO! Use a smoothing filter here instead.
     // Update velocities.
