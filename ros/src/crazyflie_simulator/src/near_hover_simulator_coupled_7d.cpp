@@ -43,6 +43,8 @@
 #include <crazyflie_simulator/near_hover_simulator_coupled_7d.h>
 #include <crazyflie_utils/angles.h>
 
+#include <std_msgs/Empty.h>
+
 namespace crazyflie_simulator {
 
 // Initialize this class by reading parameters and loading callbacks.
@@ -75,6 +77,9 @@ bool NearHoverSimulatorCoupled7D::Initialize(const ros::NodeHandle& n) {
 bool NearHoverSimulatorCoupled7D::LoadParameters(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
+  // Auto restart?
+  if (!nl.getParam("auto_restart", auto_restart_)) return false;
+
   // Frames of reference.
   if (!nl.getParam("frames/fixed", fixed_frame_id_)) return false;
   if (!nl.getParam("frames/robot", robot_frame_id_)) return false;
@@ -84,6 +89,7 @@ bool NearHoverSimulatorCoupled7D::LoadParameters(const ros::NodeHandle& n) {
 
   // Control topic.
   if (!nl.getParam("topics/control", control_topic_)) return false;
+  if (!nl.getParam("topics/restarted", restarted_topic_)) return false;
 
   // Get initial position.
   double init_x, init_y, init_z;
@@ -101,13 +107,18 @@ bool NearHoverSimulatorCoupled7D::LoadParameters(const ros::NodeHandle& n) {
 bool NearHoverSimulatorCoupled7D::RegisterCallbacks(const ros::NodeHandle& n) {
   ros::NodeHandle nl(n);
 
+  // Publishers.
+  restarted_pub_ =
+      nl.advertise<std_msgs::Empty>(restarted_topic_.c_str(), 1, false);
+
   // Subscribers.
-  control_sub_ = nl.subscribe(
-    control_topic_.c_str(), 1, &NearHoverSimulatorCoupled7D::ControlCallback, this);
+  control_sub_ =
+      nl.subscribe(control_topic_.c_str(), 1,
+                   &NearHoverSimulatorCoupled7D::ControlCallback, this);
 
   // Timer.
-  timer_ = nl.createTimer(
-    ros::Duration(dt_), &NearHoverSimulatorCoupled7D::TimerCallback, this);
+  timer_ = nl.createTimer(ros::Duration(dt_),
+                          &NearHoverSimulatorCoupled7D::TimerCallback, this);
 
   return true;
 }
@@ -117,8 +128,19 @@ void NearHoverSimulatorCoupled7D::TimerCallback(const ros::TimerEvent& e) {
   const ros::Time now = ros::Time::now();
 
   // Only update state if we have received a control signal from outside.
-  if (received_control_)
-    x_ += dynamics_(x_, u_) * (now - last_time_).toSec();
+  if (received_control_) x_ += dynamics_(x_, u_) * (now - last_time_).toSec();
+
+  // Auto restart?
+  constexpr float kMaxStateError = 10.0;
+  if (auto_restart_ &&
+      (x_.head(3).cwiseAbs().maxCoeff() > kMaxStateError || std::isnan(x_(0)) ||
+       std::isnan(x_(1)) || std::isnan(x_(2)) || std::isnan(x_(3)) ||
+       std::isnan(x_(4)) || std::isnan(x_(5)) || std::isnan(x_(6)))) {
+    x_.setZero(7);
+    x_(2) = 1.0;
+
+    ROS_WARN("%s: auto restarted.", name_.c_str());
+  }
 
   // Threshold at ground!
   if (x_(2) < 0.0) {
@@ -146,10 +168,9 @@ void NearHoverSimulatorCoupled7D::TimerCallback(const ros::TimerEvent& e) {
   const double roll = u_(0);
   const double pitch = u_(1);
   const double yaw = x_(6);
-  const Quaterniond q =
-    Eigen::AngleAxisd(roll, Vector3d::UnitX()) *
-    Eigen::AngleAxisd(pitch, Vector3d::UnitY()) *
-    Eigen::AngleAxisd(yaw, Vector3d::UnitZ());
+  const Quaterniond q = Eigen::AngleAxisd(roll, Vector3d::UnitX()) *
+                        Eigen::AngleAxisd(pitch, Vector3d::UnitY()) *
+                        Eigen::AngleAxisd(yaw, Vector3d::UnitZ());
 
   /**
   Vector3d euler = q.toRotationMatrix().eulerAngles(0, 1, 2);
@@ -172,7 +193,7 @@ void NearHoverSimulatorCoupled7D::TimerCallback(const ros::TimerEvent& e) {
 
 // Update control signal.
 void NearHoverSimulatorCoupled7D::ControlCallback(
-  const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
+    const crazyflie_msgs::ControlStamped::ConstPtr& msg) {
   u_(0) = msg->control.roll;
   u_(1) = msg->control.pitch;
   u_(2) = msg->control.yaw_dot;
@@ -181,4 +202,4 @@ void NearHoverSimulatorCoupled7D::ControlCallback(
   received_control_ = true;
 }
 
-} //\namespace crazyflie_simulator
+}  //\namespace crazyflie_simulator

@@ -13,6 +13,7 @@ message("Cmake module path: ${CMAKE_MODULE_PATH}")
 find_package(Eigen3 REQUIRED)
 
 find_package(catkin REQUIRED COMPONENTS
+  std_msgs
   roscpp
   visualization_msgs
   geometry_msgs
@@ -26,6 +27,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS
+    std_msgs
     roscpp
     visualization_msgs
     geometry_msgs

@@ -59,6 +59,7 @@ public:
   ~NearHoverSimulator() {}
   NearHoverSimulator()
     : received_control_(false),
+      auto_restart_(false),
       initialized_(false) {}
 
   // Initialize this class by reading parameters and loading callbacks.
@@ -82,6 +83,9 @@ private:
 
   // Flag for whether first control signal has been received.
   bool received_control_;
+
+  // Auto restart.
+  bool auto_restart_;
 
   // Timer.
   ros::Timer timer_;

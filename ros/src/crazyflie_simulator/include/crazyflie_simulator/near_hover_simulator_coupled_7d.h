@@ -59,6 +59,7 @@ public:
   ~NearHoverSimulatorCoupled7D() {}
   NearHoverSimulatorCoupled7D()
     : received_control_(false),
+      auto_restart_(false),
       initialized_(false) {}
 
   // Initialize this class by reading parameters and loading callbacks.
@@ -83,6 +84,9 @@ private:
   // Flag for whether first control signal has been received.
   bool received_control_;
 
+  // Auto restart?
+  bool auto_restart_;
+
   // Timer.
   ros::Timer timer_;
   double dt_;
@@ -92,8 +96,11 @@ private:
   tf2_ros::TransformBroadcaster br_;
 
   // Publishers and subscribers.
+  ros::Publisher restarted_pub_;
   ros::Subscriber control_sub_;
+
   std::string control_topic_;
+  std::string restarted_topic_;
 
   // Frames of reference.
   std::string fixed_frame_id_;
