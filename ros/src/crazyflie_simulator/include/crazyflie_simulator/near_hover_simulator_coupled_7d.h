@@ -47,6 +47,7 @@
 #include <crazyflie_utils/types.h>
 #include <crazyflie_utils/angles.h>
 
+#include <std_msgs/Empty.h>
 #include <ros/ros.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <math.h>
@@ -60,6 +61,7 @@ public:
   NearHoverSimulatorCoupled7D()
     : received_control_(false),
       auto_restart_(false),
+      in_flight_(false),
       initialized_(false) {}
 
   // Initialize this class by reading parameters and loading callbacks.
@@ -73,8 +75,18 @@ private:
   // Timer callback.
   void TimerCallback(const ros::TimerEvent& e);
 
+  // Are we in flight yet?
+  void InFlightCallback(const std_msgs::Empty::ConstPtr& msg) {
+    x0_ = x_;
+    in_flight_ = true;
+  }
+
   // Update control signal.
   void ControlCallback(const crazyflie_msgs::ControlStamped::ConstPtr& msg);
+
+  // In flight flag and state to reset to.
+  bool in_flight_;
+  VectorXd x0_;
 
   // Current state and control.
   VectorXd x_;
@@ -97,8 +109,10 @@ private:
 
   // Publishers and subscribers.
   ros::Publisher restarted_pub_;
+  ros::Subscriber in_flight_sub_;
   ros::Subscriber control_sub_;
 
+  std::string in_flight_topic_;
   std::string control_topic_;
   std::string restarted_topic_;
 

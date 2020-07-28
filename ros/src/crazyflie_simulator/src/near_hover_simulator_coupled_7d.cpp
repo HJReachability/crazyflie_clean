@@ -69,6 +69,9 @@ bool NearHoverSimulatorCoupled7D::Initialize(const ros::NodeHandle& n) {
   // Set initial time.
   last_time_ = ros::Time::now();
 
+  // Save reset state.
+  x0_ = x_;
+
   initialized_ = true;
   return true;
 }
@@ -90,6 +93,9 @@ bool NearHoverSimulatorCoupled7D::LoadParameters(const ros::NodeHandle& n) {
   // Control topic.
   if (!nl.getParam("topics/control", control_topic_)) return false;
   if (!nl.getParam("topics/restarted", restarted_topic_)) return false;
+
+  // In flight topic.
+  if (!nl.getParam("topics/in_flight", in_flight_topic_)) return false;
 
   // Get initial position.
   double init_x, init_y, init_z;
@@ -115,6 +121,9 @@ bool NearHoverSimulatorCoupled7D::RegisterCallbacks(const ros::NodeHandle& n) {
   control_sub_ =
       nl.subscribe(control_topic_.c_str(), 1,
                    &NearHoverSimulatorCoupled7D::ControlCallback, this);
+  in_flight_sub_ =
+    nl.subscribe(in_flight_topic_.c_str(), 1,
+                 &NearHoverSimulatorCoupled7D::InFlightCallback, this);
 
   // Timer.
   timer_ = nl.createTimer(ros::Duration(dt_),
@@ -136,9 +145,10 @@ void NearHoverSimulatorCoupled7D::TimerCallback(const ros::TimerEvent& e) {
       (x_.head(3).cwiseAbs().maxCoeff() > kMaxStateError || std::isnan(x_(0)) ||
        std::isnan(x_(1)) || std::isnan(x_(2)) || std::isnan(x_(3)) ||
        std::isnan(x_(4)) || std::isnan(x_(5)) || std::isnan(x_(6)))) {
-    x_.setZero(7);
-    x_(2) = 1.0;
+    x_ = x0_;
 
+    received_control_ = false;
+    restarted_pub_.publish(std_msgs::Empty());
     ROS_WARN("%s: auto restarted.", name_.c_str());
   }
 
