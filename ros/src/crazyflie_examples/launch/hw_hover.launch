@@ -2,27 +2,11 @@
 
 <launch>
   <!-- Crazyflie address. -->
-  <arg name="HY0" value="radio://0/0/2M/FA57CF2018" />
-  <arg name="HY1" value="radio://0/1/2M/FA57CF2018" />
-  <arg name="HY2" value="radio://0/2/2M/FA57CF2018" />
-  <arg name="HY3" value="radio://0/3/2M/FA57CF2018" />
-  <arg name="HY4" value="radio://0/4/2M/FA57CF2018" />
-  <arg name="HY5" value="radio://0/5/2M/FA57CF2018" />
-  <arg name="HY6" value="radio://0/6/2M/FA57CF2018" />
-  <arg name="HY7" value="radio://0/7/2M/FA57CF2018" />
-
-
-<!-- OLD
-  <arg name="uri0" value="radio://0/79/2M/E7E7E7E7E7" />
-  <arg name="uri1" value="radio://2/101/2M/E7E7E7E701" />
-  <arg name="uri2" value="radio://0/88/2M/E7E7E7E705" />
-  <arg name="uri3" value="radio://0/93/2M/E7E7E7E703" />
-  <arg name="uri4" value="radio://WE_DO_NOT_HAVE_cf4" />
-  <arg name="uri5" value="radio://0/72/2M/E7E7E7E701" />
-  <arg name="uri6" value="radio://0/25/2M/E7E7E7E701" />
-  <arg name="uri7" value="radio://0/52/2M/E7E7E7E702" /> -->
-
-  <arg name="uri" default="$(arg HY5)" />
+  <!-- <arg name="CF1" value="radio://0/80/2M/E7E7E7E701" />
+  <arg name="CF2" value="radio://0/80/2M/E7E7E7E702" />
+  <arg name="CF3" value="radio://0/80/2M/E7E7E7E703" /> -->
+  <arg name="robot_number" default="1" />
+  <arg name="uri" value="radio://0/80/2M/E7E7E7E70$(arg robot_number)" />
 
   <!-- Topics. -->
   <arg name="reference_topic" default="/ref"/>
@@ -33,9 +17,9 @@
   <arg name="in_flight_topic" default="/in_flight" />
 
   <!-- Frames of reference. -->
-  <arg name="fixed_frame" default="world" />
+  <arg name="fixed_frame" default="odom" />
   <arg name="robot_frame" default="crazyflie" />
-  <arg name="mocap_frame" default="HY5/base_link" />
+  <arg name="mocap_frame" default="vicon/robot_1/robot_1" />
 
   <!-- Takeoff hover point. -->
   <arg name="takeoff_hover_x" default="0.0" />
@@ -179,7 +163,7 @@
         required="true">
 
     <param name="robot_description"
-           command="$(find xacro)/xacro.py
+           command="$(find xacro)/xacro
                     $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
   </node>
 </launch>

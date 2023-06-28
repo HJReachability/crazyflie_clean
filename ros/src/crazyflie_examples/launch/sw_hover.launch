@@ -5,6 +5,7 @@
   <arg name="reference_topic" default="/ref" />
   <arg name="state_topic" default="/state" />
   <arg name="lqr_control_topic" default="/control/lqr" />
+  <arg name="merged_control_topic" default="/control/merged" />
   <arg name="takeoff_control_topic" default="/control/takeoff" />
   <arg name="final_control_topic" default="/control/final" />
   <arg name="in_flight_topic" default="/in_flight" />
@@ -24,7 +25,7 @@
   <arg name="sim_init_z" default="0.0" />
 
   <!-- Control parameters. -->
-  <arg name="K_file" default="$(find crazyflie_lqr)/references/K_lqr.txt"/>
+  <arg name="K_file" default="$(find crazyflie_lqr)/references/K_sander.txt"/>
   <arg name="u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt"/>
 
   <!-- Time steps. -->
@@ -114,7 +115,7 @@
         output="screen">
 
     <param name="topics/takeoff_control" value="$(arg takeoff_control_topic)" />
-    <param name="topics/commanded_control" value="$(arg lqr_control_topic)" />
+    <param name="topics/commanded_control" value="$(arg merged_control_topic)" />
     <param name="topics/final_control" value="$(arg final_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
   </node>
@@ -127,7 +128,7 @@
         required="true">
 
     <param name="robot_description"
-           command="$(find xacro)/xacro.py
+           command="$(find xacro)/xacro
                     $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
   </node>
 </launch>
