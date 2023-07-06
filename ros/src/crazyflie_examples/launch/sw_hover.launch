@@ -89,7 +89,7 @@
 
     <param name="topics/reference" value="$(arg reference_topic)" />
     <param name="topics/state" value="$(arg state_topic)" />
-    <param name="topics/control" value="$(arg lqr_control_topic)" />
+    <param name="topics/control" value="$(arg merged_control_topic)" />
     <param name="topics/in_flight" value="$(arg in_flight_topic)" />
   </node>
 
