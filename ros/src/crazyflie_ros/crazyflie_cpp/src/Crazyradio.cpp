@@ -4,7 +4,7 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <libusb-1.0/libusb.h>
+#include </usr/include/libusb-1.0/libusb.h>
 
 enum
 {
