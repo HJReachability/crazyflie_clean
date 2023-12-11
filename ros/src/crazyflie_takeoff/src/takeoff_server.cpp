@@ -145,7 +145,8 @@ LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
   ROS_INFO("%s: Landing requested.", name_.c_str());
 
   // Let other nodes know that we are not in flight anymore.
-  in_flight_pub_.publish(std_msgs::Empty());
+  if (in_flight_)
+    in_flight_pub_.publish(std_msgs::Empty());
 
   // Slowly spin the rotors down.
   const ros::Time right_now = ros::Time::now();
