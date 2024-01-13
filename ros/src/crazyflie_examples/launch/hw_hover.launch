@@ -2,11 +2,8 @@
 
 <launch>
   <!-- Crazyflie address. -->
-  <!-- <arg name="CF1" value="radio://0/80/2M/E7E7E7E701" />
-  <arg name="CF2" value="radio://0/80/2M/E7E7E7E702" />
-  <arg name="CF3" value="radio://0/80/2M/E7E7E7E703" /> -->
-  <arg name="robot_number" default="1" />
-  <arg name="uri" value="radio://0/80/2M/E7E7E7E70$(arg robot_number)" />
+  <arg name="robot_number" default="3" />
+  <arg name="uri" value="radio://0/80/2M/E7E7E7E7E$(arg robot_number)" />
 
   <!-- Topics. -->
   <arg name="reference_topic" default="/ref"/>
@@ -18,8 +15,11 @@
 
   <!-- Frames of reference. -->
   <arg name="fixed_frame" default="odom" />
-  <arg name="robot_frame" default="crazyflie" />
-  <arg name="mocap_frame" default="vicon/robot_1/robot_1" />
+
+  <arg name="robot_frame" default="robot_1" />
+  <arg name="mocap_frame" value="/natnet_ros/robot_1/pose" />
+  <!-- <arg name="robot_frame" default="crazyflie" /> -->
+  <!-- <arg name="mocap_frame" value="/vicon/robot_1/robot_1" /> -->
 
   <!-- Takeoff hover point. -->
   <arg name="takeoff_hover_x" default="0.0" />
@@ -58,6 +58,12 @@
         type="static_transform_publisher"
         name="mocap_frame_publisher"
         args="0 0 0 0 0 0 1 $(arg mocap_frame) $(arg robot_frame) 100">
+  </node>
+
+  <node pkg="tf"
+        type="static_transform_publisher"
+        name="world_link_publisher"
+        args="0 0 0 0 0 0 1 world odom 100">
   </node>
 
   <!-- Crazyflie interface. -->
@@ -134,7 +140,7 @@
     <param name="frames/fixed" value="$(arg fixed_frame)" />
     <param name="frames/robot" value="$(arg robot_frame)" />
 
-    <param name="topics/state" value="$(arg state_topic)" />
+    <param name="topics/state" value="$(arg state_topic)" /> 
   </node>
 
   <!-- LQR controller. -->
