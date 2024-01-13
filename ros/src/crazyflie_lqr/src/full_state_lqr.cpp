@@ -136,6 +136,7 @@ void FullStateLqr::StateCallback(
   control_msg.control.pitch = u(1);
   control_msg.control.yaw_dot = u(2);
   control_msg.control.thrust = u(3);
+  control_msg.header.stamp = ros::Time::now();
 
   control_pub_.publish(control_msg);
 }
