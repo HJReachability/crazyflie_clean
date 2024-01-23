@@ -7,7 +7,7 @@ project(crazyflie_state_estimator)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 #endif()
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/crazyflie_state_estimator/modules)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules)
 message("Cmake module path: ${CMAKE_MODULE_PATH}")
 
 find_package(Eigen3 REQUIRED)
@@ -55,7 +55,7 @@ link_directories(
   ${EIGEN3_LIBRARY_DIRS}
 )
 
-file(GLOB_RECURSE ${PROJECT_NAME}_srcs ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}/src/*.cpp)
+file(GLOB_RECURSE ${PROJECT_NAME}_srcs ${PROJECT_SOURCE_DIR}/src/*.cpp)
 add_library(${PROJECT_NAME} ${${PROJECT_NAME}_srcs})
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 
@@ -70,6 +70,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
   ${EIGEN3_LIBRARIES}
+  usb-1.0
 )
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
@@ -98,6 +99,7 @@ foreach(executable ${${PROJECT_NAME}_execs})
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
     ${EIGEN3_LIBRARIES}
+    usb-1.0
   )
 endforeach()
 endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
@@ -115,5 +117,6 @@ if(CATKIN_ENABLE_TESTING)
     ${PROJECT_NAME}
     ${GTEST_LIBRARIES}
     ${EIGEN3_LIBRARIES}
+    usb-1.0
   )
 endif()

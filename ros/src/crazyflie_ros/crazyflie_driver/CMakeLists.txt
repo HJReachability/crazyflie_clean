@@ -90,6 +90,7 @@ add_dependencies(crazyflie_server
 ## Specify libraries to link a library or executable target against
 target_link_libraries(crazyflie_server
   ${catkin_LIBRARIES}
+  usb-1.0
 )
 
 ## Declare a cpp executable
@@ -103,6 +104,7 @@ add_dependencies(crazyflie_add
 
 target_link_libraries(crazyflie_add
   ${catkin_LIBRARIES}
+  usb-1.0
 )
 
 #############

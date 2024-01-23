@@ -39,44 +39,66 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a cpp executable
-add_executable(scan
-  src/scan.cpp
+## List of executable names to generate
+set(executables
+  scan
+  listParams
+  listLogVariables
+  reboot
+  ## add more as needed
 )
+# manually change depending on if there's unique dependencies to add to an individual executable
+set(HAS_INDEPENDENT_LIBRARIES FALSE)
+## add executables (loop through)
+foreach(executable ${executables})
+	add_executable(${executable} src/${executable}.cpp)
+	## Specify libraries to link a library or executable target against
+	target_link_libraries(${executable}
+	    ${catkin_LIBRARIES}
+	    ${Boost_LIBRARIES}
+	    usb-1.0
+	  )
+endforeach()
 
-## Specify libraries to link a library or executable target against
-target_link_libraries(scan
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+if(HAS_INDEPENDENT_LIBRARIES)
+  ## Declare a cpp executable
+  add_executable(scan
+    src/scan.cpp
+  )
 
-### listParams
-add_executable(listParams
-  src/listParams.cpp
-)
-target_link_libraries(listParams
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+  ## Specify libraries to link a library or executable target against
+  target_link_libraries(scan
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
 
-### listLogVariables
-add_executable(listLogVariables
-  src/listLogVariables.cpp
-)
-target_link_libraries(listLogVariables
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+  ### listParams
+  add_executable(listParams
+    src/listParams.cpp
+  )
+  target_link_libraries(listParams
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
 
-### reboot
-add_executable(reboot
-  src/reboot.cpp
-)
-target_link_libraries(reboot
-  ${catkin_LIBRARIES}
-  ${Boost_LIBRARIES}
-)
+  ### listLogVariables
+  add_executable(listLogVariables
+    src/listLogVariables.cpp
+  )
+  target_link_libraries(listLogVariables
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
 
+  ### reboot
+  add_executable(reboot
+    src/reboot.cpp
+  )
+  target_link_libraries(reboot
+    ${catkin_LIBRARIES}
+    ${Boost_LIBRARIES}
+  )
+endif()
 #############
 ## Install ##
 #############
