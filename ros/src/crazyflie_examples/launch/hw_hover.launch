@@ -26,6 +26,9 @@
   <arg name="takeoff_hover_y" default="0.0" />
   <arg name="takeoff_hover_z" default="1.0" />
 
+  <!-- Waypoints -->
+  <arg name="waypoints" default="[ [1.0, 1.0, 1.5], [2.0, 1.0, 1.5], [2.0, 2.0, 1.5], [1.0, 1.0, 1.5] , [-1.0, -1.0, 0.5]]" />
+
   <!-- Start point for the simulator. -->
   <arg name="sim_init_x" default="0.0" />
   <arg name="sim_init_y" default="0.0" />
@@ -172,4 +175,14 @@
            command="$(find xacro)/xacro
                     $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
   </node>
+
+  <!-- Waypoint Publisher. -->
+  <node name="waypoint"
+        pkg="crazyflie_examples"
+        type="cf_waypoint.py"
+        output="screen">
+
+        <param name="waypoints" value="$(arg waypoints)" />    
+  </node>
+
 </launch>
