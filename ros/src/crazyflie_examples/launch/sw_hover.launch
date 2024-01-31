@@ -24,6 +24,9 @@
   <arg name="sim_init_y" default="0.0" />
   <arg name="sim_init_z" default="0.0" />
 
+ <!-- Waypoints -->
+  <arg name="waypoints" default="[ [1.0, 1.0, 1.5], [2.0, 1.0, 2.5], [3.0, 1.0, 5.5], [4.0, 1.0, 1.5] ]" />
+
   <!-- Control parameters. -->
   <arg name="K_file" default="$(find crazyflie_lqr)/references/K_sander.txt"/>
   <arg name="u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt"/>
@@ -131,4 +134,14 @@
            command="$(find xacro)/xacro
                     $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
   </node>
+
+  <!-- Waypoint Publisher. -->
+  <node name="waypoint"
+        pkg="crazyflie_examples"
+        type="cf_waypoint.py"
+        output="screen">
+
+        <param name="waypoints" value="$(arg waypoints)" />    
+  </node>
+
 </launch>
