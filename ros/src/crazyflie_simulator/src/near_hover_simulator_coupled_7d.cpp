@@ -52,6 +52,7 @@ bool NearHoverSimulatorCoupled7D::Initialize(const ros::NodeHandle& n) {
   // Set state and control to zero initially.
   x_ = VectorXd::Zero(7);
   u_ = VectorXd::Zero(4);
+  d_ = VectorXd::Zero(7);
   //  u_(3) = crazyflie_utils::constants::G;
 
   if (!LoadParameters(n)) {
@@ -84,6 +85,7 @@ bool NearHoverSimulatorCoupled7D::LoadParameters(const ros::NodeHandle& n) {
 
   // Control topic.
   if (!nl.getParam("topics/control", control_topic_)) return false;
+  if (!nl.getParam("topics/disturbance", disturbance_topic_)) return false;
 
   // Get initial position.
   double init_x, init_y, init_z;
@@ -105,6 +107,9 @@ bool NearHoverSimulatorCoupled7D::RegisterCallbacks(const ros::NodeHandle& n) {
   control_sub_ = nl.subscribe(
     control_topic_.c_str(), 1, &NearHoverSimulatorCoupled7D::ControlCallback, this);
 
+  // disturbance_sub_ = nl.subscribe(
+  //   disturbance_topic_.c_str(), 1, &NearHoverSimulatorCoupled7D::DisturbanceCallback, this);
+  
   // Timer.
   timer_ = nl.createTimer(
     ros::Duration(dt_), &NearHoverSimulatorCoupled7D::TimerCallback, this);
@@ -118,7 +123,7 @@ void NearHoverSimulatorCoupled7D::TimerCallback(const ros::TimerEvent& e) {
 
   // Only update state if we have received a control signal from outside.
   if (received_control_)
-    x_ += dynamics_(x_, u_) * (now - last_time_).toSec();
+    x_ += dynamics_(x_, u_, d_) * (now - last_time_).toSec();
 
   // Threshold at ground!
   if (x_(2) < 0.0) {
@@ -179,6 +184,17 @@ void NearHoverSimulatorCoupled7D::ControlCallback(
   u_(3) = msg->control.thrust;
 
   received_control_ = true;
+}
+
+void NearHoverSimulatorCoupled7D::DisturbanceCallback(
+  const crazyflie_msgs::DisturbanceStamped::ConstPtr& msg) {
+  d_(0) = msg->disturbance.x;
+  d_(1) = msg->disturbance.y;
+  d_(2) = msg->disturbance.z;
+  d_(3) = msg->disturbance.x_dot;
+  d_(4) = msg->disturbance.y_dot;
+  d_(5) = msg->disturbance.z_dot;
+  d_(6) = msg->disturbance.yaw;
 }
 
 } //\namespace crazyflie_simulator

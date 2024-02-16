@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 
 <launch>
+  <arg name="track_waypoints" default="True" />
+  <arg name="disturbances" default="False" />
+
   <!-- Topics. -->
   <arg name="reference_topic" default="/ref" />
   <arg name="state_topic" default="/state" />
@@ -8,6 +11,7 @@
   <arg name="merged_control_topic" default="/control/merged" />
   <arg name="takeoff_control_topic" default="/control/takeoff" />
   <arg name="final_control_topic" default="/control/final" />
+  <arg name="disturbance_topic" default="/disturbance" />
   <arg name="in_flight_topic" default="/in_flight" />
 
   <!-- Frames of reference. -->
@@ -61,6 +65,7 @@
     <param name="frames/robot" value="$(arg robot_frame)" />
 
     <param name="topics/control" value="$(arg final_control_topic)" />
+    <param name="topics/disturbance" value="$(arg disturbance_topic)" />
   </node>
 
   <!-- State estimator. -->
@@ -134,14 +139,24 @@
            command="$(find xacro)/xacro
                     $(find crazyflie_description)/urdf/crazyflie.urdf.xacro" />
   </node>
+  <group if="$(eval arg('track_waypoints') == 1)">
+      <!-- Waypoint Publisher. -->
+      <node name="waypoint"
+            pkg="crazyflie_examples"
+            type="cf_waypoint.py"
+            output="screen">
 
-  <!-- Waypoint Publisher. -->
-  <node name="waypoint"
-        pkg="crazyflie_examples"
-        type="cf_waypoint.py"
-        output="screen">
+            <param name="waypoints" value="$(arg waypoints)" />    
+      </node>
+  </group>
 
-        <param name="waypoints" value="$(arg waypoints)" />    
-  </node>
+  <group if="$(eval arg('disturbances') == 1)">
+      <node name="disturbance"
+            pkg="crazyflie_examples"
+            type="disturbance.py"
+            output="screen">
 
+            <param name="topics/disturbance" value="$(arg disturbance_topic)" />
+      </node>
+  </group>
 </launch>

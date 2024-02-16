@@ -57,7 +57,7 @@ public:
   virtual ~ForwardDynamics() {}
 
   // Evaluate forward dynamics at a particular state.
-  virtual VectorXd operator()(const VectorXd& x, const VectorXd& u) const = 0;
+  virtual VectorXd operator()(const VectorXd& x, const VectorXd& u, const VectorXd& d) const = 0;
 
 protected:
   explicit ForwardDynamics() {}
