@@ -160,9 +160,9 @@ void PositionVelocityYawStateLiftLqr::StateCallback(
   //  u(1) = crazyflie_utils::angles::WrapAngleRadians(u(1));
 
   // HACK! These thresholds should not be hard coded!
-  u(0) = std::max(std::min(u(0), 0.2618), -0.2618);
-  u(1) = std::max(std::min(u(1), 0.2618), -0.2618);
-  u(3) = std::max(std::min(u(3), 16.0), 4.0);
+  u(0) = std::max(std::min(u(0), 0.1), -0.1);
+  u(1) = std::max(std::min(u(1), 0.1), -0.1);
+  u(3) = std::max(std::min(u(3), 15.0), 4.0);
 
   // Publish.
   crazyflie_msgs::ControlStamped control_msg;
