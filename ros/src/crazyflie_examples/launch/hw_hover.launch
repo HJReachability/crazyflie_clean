@@ -21,7 +21,15 @@
   <!-- Takeoff hover point. -->
   <arg name="takeoff_hover_x" default="0.0" />
   <arg name="takeoff_hover_y" default="0.0" />
-  <arg name="takeoff_hover_z" default="1.5" />
+  <arg name="takeoff_hover_z" default="1.0" />
+
+  <arg name="takeoff_thrust" default="13.0" if="$(eval robot_number == 1)" />
+  <arg name="takeoff_thrust" default="12.0" if="$(eval robot_number == 2)" />
+  <arg name="takeoff_thrust" default="11.5" if="$(eval robot_number == 3)" />
+  <!-- Takeoff duration and values -->  
+  
+  <arg name="takeoff_duration" default="1.5" />
+  <arg name="landing_duration" default="3.0" />
 
   <!-- Waypoints -->
   <arg name="waypoints" default="[ [1.0, 1.0, 1.5], [2.0, 1.0, 1.5], [2.0, 2.0, 1.5], [1.0, 1.0, 1.5] , [-1.0, -1.0, 0.5]]" />
@@ -33,8 +41,8 @@
 
 
   <!-- Control parameters. -->
-  <arg name="K_file" default="$(find crazyflie_lqr)/references/K_test.txt"/>
-  <arg name="u_ref_file" default="$(find crazyflie_lqr)/references/u_ref_hover.txt"/>
+  <arg name="K_file" default="$(find crazyflie_lqr)/references/K.txt"/>
+  <arg name="u_ref_file" value="$(find crazyflie_lqr)/references/uref$(arg robot_number).txt"/>
 
   <!-- Time steps.changed to 0.001 --> 
   <arg name="simulator_dt" default="0.001" />
@@ -81,6 +89,9 @@
     <param name="hover/x" value="$(arg takeoff_hover_x)" />
     <param name="hover/y" value="$(arg takeoff_hover_y)" />
     <param name="hover/z" value="$(arg takeoff_hover_z)" />
+    <param name="takeoff/thrust" value="$(arg takeoff_thrust)" />
+    <param name="duration/open_loop" value="$(arg takeoff_duration)" />
+    <param name="duration/landing" value="$(arg landing_duration)" />
   </node>
 
   <!-- Takeoff server node. -->

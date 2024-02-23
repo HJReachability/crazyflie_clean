@@ -83,7 +83,10 @@ bool TakeoffServer::LoadParameters(const ros::NodeHandle& n) {
     open_loop_duration_ = 1.0;
   if (!nl.getParam("duration/hover", hover_duration_))
     hover_duration_ = 5.0;
-
+  if (!nl.getParam("takeoff/thrust", takeoff_thrust_))
+    takeoff_thrust_ = 12.0;
+  if (!nl.getParam("duration/landing", landing_duration_))
+    landing_duration_ = 2.0;
   // Service names.
   if (!nl.getParam("srv/takeoff", takeoff_srv_name_))
     takeoff_srv_name_ = "/takeoff";
@@ -149,18 +152,19 @@ LandService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
     in_flight_pub_.publish(std_msgs::Empty());
 
   // Slowly spin the rotors down.
-  const ros::Time right_now = ros::Time::now();
-  while ((ros::Time::now() - right_now).toSec() < 1.0) {
+  const ros::Time land_request_time = ros::Time::now();
+  while ((ros::Time::now() - land_request_time).toSec() < landing_duration_) {
     crazyflie_msgs::ControlStamped msg;
     msg.header.stamp = ros::Time::now();
 
     msg.control.roll = 0.0;
     msg.control.pitch = 0.0;
     msg.control.yaw_dot = 0.0;
-
+    double time_elapsed = (ros::Time::now() - land_request_time).toSec();
+    double share_elapsed = time_elapsed / landing_duration_;
+    double thrust_val = takeoff_thrust_ * (1 - share_elapsed) + 9.0 * share_elapsed;
     // Slowly decrement thrust.
-    msg.control.thrust = std::max(0.0, crazyflie_utils::constants::G -
-                                  5.0 * (ros::Time::now() - right_now).toSec());
+    msg.control.thrust = thrust_val;
 
     control_pub_.publish(msg);
 
@@ -195,7 +199,7 @@ TakeoffService(std_srvs::Empty::Request& req, std_srvs::Empty::Response& res) {
     msg.control.yaw_dot = 0.0;
 
     // Offset gravity, plus a little extra to lift off.
-    msg.control.thrust = crazyflie_utils::constants::G + 0.2;
+    msg.control.thrust = takeoff_thrust_;
     control_pub_.publish(msg);
 
     // Sleep a little, then rerun the loop.
